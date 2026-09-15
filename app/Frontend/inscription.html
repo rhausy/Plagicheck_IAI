@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inscription — PlagiCheck</title>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root { 
+    --vert: #0E7C7B; 
+    --bleu: #3B82F6; 
+  }
+
+  * { box-sizing: border-box; }
+
+  /* Arrière-plan animé vibrant style arc-en-ciel technologique */
+  body {
+    margin: 0; 
+    height: 100vh; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    font-family: "IBM Plex Sans", sans-serif;
+    background: linear-gradient(-45deg, #0f172a, #1e1b4b, #065f46, #1e3a8a, #312e81);
+    background-size: 400% 400%;
+    animation: fondArcEnCiel 12s ease infinite;
+    overflow: hidden; 
+    position: relative; 
+    padding: 1.5rem;
+  }
+
+  @keyframes fondArcEnCiel {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* Halos lumineux dynamiques pour l'effet arc-en-ciel */
+  .halo-1, .halo-2 {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.6;
+  }
+  .halo-1 {
+    width: 350px; height: 350px;
+    background: #00f2fe;
+    top: 10%; left: 15%;
+  }
+  .halo-2 {
+    width: 400px; height: 400px;
+    background: #4facfe;
+    bottom: 10%; right: 15%;
+  }
+
+  /* Contour dégradé de la carte */
+  .carte-enveloppe {
+    position: relative; 
+    z-index: 1; 
+    padding: 1.5px; 
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.4), var(--vert), var(--bleu), rgba(255,255,255,0.2));
+    background-size: 200% 200%;
+    animation: degrade 6s ease infinite, apparaitre 0.6s ease both;
+    max-height: calc(100vh - 3rem); /* Empêche de toucher le haut/bas */
+    display: flex;
+  }
+
+  @keyframes degrade { 
+    0% { background-position: 0% 50%; } 
+    50% { background-position: 100% 50%; } 
+    100% { background-position: 0% 50%; } 
+  }
+  @keyframes apparaitre { 
+    from { opacity: 0; transform: translateY(14px); } 
+    to { opacity: 1; transform: translateY(0); } 
+  }
+
+  /* Cadre flottant compact, centré et ultra-élégant */
+  .carte {
+    width: min(390px, 88vw); 
+    padding: 1.5rem 1.8rem; 
+    border-radius: 19px;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: #fff;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+    overflow-y: auto;
+  }
+
+  .carte h1 { font-family: "Newsreader", serif; font-size: 1.5rem; margin: 0 0 0.1rem; text-align: center; }
+  .carte p.sous { text-align: center; font-size: 0.8rem; color: #CBD5E1; margin: 0 0 1.1rem; }
+
+  label { display: block; font-size: 0.75rem; font-weight: 600; margin: 0.75rem 0 0.25rem; color: #E2E8F0; }
+
+  .champ { position: relative; }
+  .champ input, .champ select {
+    width: 100%; 
+    padding: 0.6em 0.8em; 
+    border-radius: 8px; 
+    font-size: 0.85rem;
+    background: rgba(255, 255, 255, 0.07); 
+    border: 1px solid rgba(255, 255, 255, 0.2); 
+    color: #fff;
+    transition: all 0.2s ease;
+  }
+  
+  .champ select option { background: #0F172A; color: #fff; }
+  .champ input::placeholder { color: #94A3B8; }
+  .champ input:focus, .champ select:focus { 
+    outline: none; 
+    border-color: #38BDF8; 
+    background: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25);
+  }
+
+  .ligne-double { display: flex; gap: 0.7rem; }
+  .ligne-double > div { flex: 1; }
+
+  button.principal {
+    width: 100%; 
+    margin-top: 1.2rem; 
+    padding: 0.75em; 
+    border: none; 
+    border-radius: 999px;
+    font-weight: 600; 
+    font-size: 0.9rem; 
+    color: #fff; 
+    cursor: pointer;
+    background: linear-gradient(120deg, var(--vert), var(--bleu));
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  button.principal:hover { 
+    transform: translateY(-2px); 
+    box-shadow: 0 10px 20px -5px rgba(59,130,246,0.5); 
+  }
+
+  .bas { text-align: center; font-size: 0.78rem; color: #CBD5E1; margin-top: 1rem; }
+  .bas a { color: #38BDF8; font-weight: 600; text-decoration: none; }
+  .bas a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div class="halo-1"></div>
+<div class="halo-2"></div>
+
+<div class="carte-enveloppe">
+  <div class="carte">
+    <h1>PlagiCheck</h1>
+    <p class="sous">Créer un compte d'accès</p>
+
+    <form id="formulaireInscription">
+      <label for="nomComplet">Nom complet</label>
+      <div class="champ">
+        <input type="text" id="nomComplet" name="nomComplet" placeholder="Ex: Jean Dupont" required>
+      </div>
+
+      <label for="email">Adresse email académique</label>
+      <div class="champ">
+        <input type="email" id="email" name="email" placeholder="vous@iai-cameroun.com" required>
+      </div>
+
+      <label for="role">Profil / Rôle</label>
+      <div class="champ">
+        <select id="role" name="role" required>
+          <option value="etudiant">Étudiant (Consultation uniquement)</option>
+          <option value="enseignant">Enseignant / Encadrant</option>
+          <option value="admin">Administrateur</option>
+        </select>
+      </div>
+
+      <div class="ligne-double">
+        <div>
+          <label for="motDePasse">Mot de passe</label>
+          <div class="champ">
+            <input type="password" id="motDePasse" name="motDePasse" placeholder="••••••••" required>
+          </div>
+        </div>
+        <div>
+          <label for="confirmMotDePasse">Confirmation</label>
+          <div class="champ">
+            <input type="password" id="confirmMotDePasse" name="confirmMotDePasse" placeholder="••••••••" required>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="principal">S'inscrire</button>
+    </form>
+
+    <p class="bas">Déjà inscrit ? <a href="connexion.html">Se connecter</a></p>
+  </div>
+</div>
+
+<script>
+  document.getElementById("formulaireInscription").addEventListener("submit", function (e) {
+    e.preventDefault();
+    const mdp = document.getElementById("motDePasse").value;
+    const confirmMdp = document.getElementById("confirmMotDePasse").value;
+
+    if (mdp !== confirmMdp) {
+      alert("Les mots de passe ne correspondent pas.");
+      return;
+    }
+    
+    window.location.href = "connexion.html";
+  });
+</script>
+</body>
+</html>

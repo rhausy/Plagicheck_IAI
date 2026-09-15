@@ -1,0 +1,1410 @@
+projets L3
+
+Fiche de cadrage du projet (version définitive)
+
+Thème : Conception et réalisation d'un système intelligent de détection des plagiats dans les rapports académiques
+
+Problématique : Malgré l'encadrement académique, plusieurs étudiants soumettent des rapports de fin d'études, exposés ou projets qui reprennent intégralement d'anciens travaux ou contiennent des passages plagiés sans modification substantielle. L'absence d'un outil systématique de vérification expose l'établissement à une perte de crédibilité académique et à une évaluation inéquitable entre étudiants.
+
+Objectif général : Concevoir et développer un système capable de détecter automatiquement les similarités textuelles entre un document soumis et une base de documents de référence, en générant un rapport de score exploitable par les enseignants, membres du jury et personnel administratif — tout en offrant à l'étudiant une visibilité pédagogique sur son propre résultat.
+
+Acteurs et droits d'accès (verrouillés) :
+
+Acteur	Peut faire
+Étudiant	Uploader son document, consulter son propre rapport, télécharger son rapport, consulter son historique
+Encadrant/Jury	Consulter les rapports de tous les étudiants sous sa responsabilité, filtrer/trier par score, ajouter un commentaire/décision, déclencher une analyse manuelle à tout moment
+Administrateur	Gérer la base de référence, gérer les comptes, configurer le seuil d'alerte, configurer l'échéance de dépôt automatique
+
+Déclenchement de l'analyse (2 modes combinés) :
+
+Automatique : à une échéance de dépôt configurée par l'administrateur
+Manuel : à tout moment, à la demande d'un encadrant/jury (par exemple juste avant une soutenance)
+
+Stack technique :
+
+Backend : Python + FastAPI
+NLP : spaCy (prétraitement) + scikit-learn (TF-IDF/similarité lexicale) + sentence-transformers (similarité sémantique)
+Frontend : HTML + CSS + JavaScript
+Base de données : SQLite
+Génération de rapport : ReportLab (PDF)
+
+Ce qu'on garde de nos travaux précédents (toujours valables, rien à refaire) :
+
+Le schéma complet de base de données (8 tables, avec la spécialisation des utilisateurs)
+L'architecture 3-tiers détaillée
+Les 21 cas d'utilisation avec leurs relations d'inclusion/extension
+Ton résumé (français + anglais) déjà adapté à ce thème
+Ce qu'il reste à faire pour un dossier vraiment professionnel
+Cahier des charges complet (structuré, formel, prêt à insérer dans le mémoire)
+État de l'art (Turnitin, Compilatio, MOSS... et pourquoi ton système se justifie face à eux)
+Diagramme de séquence détaillé du processus d'analyse
+Diagramme de classes
+Estimation des charges/planning (Gantt) pour ton mémoire
+Début du code (structure de projet, environnement, premiers modules)
+
+
+
+                                    EXISTANT
+1. PRÉSENTATION DU THÈME/PROJET
+
+L'évaluation des travaux académiques (rapports de fin d'études, exposés, projets de soutenance) constitue une composante essentielle du processus pédagogique, car elle atteste du niveau réel de compétence et d'effort fourni par chaque étudiant. Cependant, plusieurs établissements d'enseignement supérieur, notamment l'IAI Cameroun, continuent de s'appuyer exclusivement sur l'appréciation humaine des enseignants et des membres du jury pour détecter d'éventuels cas de plagiat. Cette méthode présente aujourd'hui de nombreuses limites face à la quantité croissante de travaux à évaluer chaque année, ainsi qu'à la sophistication grandissante des pratiques de plagiat (copie intégrale d'anciens rapports, réutilisation de passages sans citation, léger reformulation superficielle). Dans cette optique, la mise en place d'un système intelligent de détection des plagiats apparaît comme une solution innovante permettant d'automatiser, de fiabiliser et de tracer la vérification de l'authenticité des rapports académiques.
+
+2. ÉTUDE DE L'EXISTANT
+
+L'analyse des pratiques de vérification de l'authenticité des travaux académiques au sein de l'IAI Cameroun révèle l'adoption exclusive d'une méthode manuelle et informelle. La détection du plagiat repose actuellement sur la vigilance individuelle des enseignants et des membres du jury, qui s'appuient sur leur mémoire personnelle et leur expérience pour reconnaître d'éventuelles similitudes avec d'anciens rapports déjà soutenus. Aucun outil informatique dédié n'est utilisé pour comparer systématiquement un nouveau rapport avec les travaux précédemment archivés. Les anciens mémoires et rapports de stage, bien que conservés dans les archives de l'établissement (format papier ou fichiers numériques dispersés), ne sont exploités comme base de comparaison que de manière ponctuelle et non systématique, lorsqu'un enseignant a un doute particulier sur un document. Cette situation soulève des problématiques significatives en matière d'équité entre étudiants, de fiabilité de l'évaluation, et de crédibilité académique de l'établissement.
+
+3. CRITIQUE DE L'EXISTANT
+
+Tableau 1 — Critique de l'existant
+
+Critique	Limites	Solutions
+Détection manuelle basée sur la mémoire humaine	- Dépendance à la seule mémoire et vigilance individuelle de l'enseignant.
+- Impossibilité de comparer un rapport à l'ensemble des travaux déjà soutenus.
+- Risque élevé de cas de plagiat non détectés, notamment pour les enseignants n'ayant pas suivi les promotions précédentes.	- Mise en place d'un système automatisé de comparaison textuelle entre documents.
+- Constitution d'une base de référence numérique regroupant l'ensemble des anciens rapports.
+Absence d'outil de mesure objective	- Absence de score chiffré ou de preuve documentée en cas de suspicion.
+- Décision reposant sur une appréciation subjective, difficilement contestable ou défendable devant une commission.
+- Traitement inégal selon l'enseignant en charge de l'évaluation.	- Génération automatique d'un score de similarité (%) par document.
+- Production d'un rapport détaillé, objectif et traçable, localisant les passages suspects.
+Archives sous-exploitées	- Les anciens rapports, bien que conservés, ne sont pas centralisés ni interrogeables informatiquement.
+- Recherche de similarité, quand elle a lieu, se fait au cas par cas et de façon très chronophage.	- Numérisation et centralisation des anciens rapports dans une base de données de référence.
+- Indexation permettant une comparaison automatique et rapide à chaque nouveau dépôt.
+Absence de traçabilité du contrôle	- Aucun historique des vérifications effectuées.
+- Impossibilité de prouver qu'un contrôle d'authenticité a bien été réalisé pour un rapport donné.	- Journalisation systématique de chaque analyse (date, score, décision de l'encadrant) dans le système.
+4. PROBLÉMATIQUE
+
+Face à ces constats, la question suivante se pose : comment permettre à l'IAI Cameroun d'assurer une vérification systématique, objective et tracée de l'authenticité des rapports académiques soumis par ses étudiants, sans reposer uniquement sur la mémoire et l'appréciation individuelle des enseignants ?
+
+5. PROPOSITION DE SOLUTION
+
+Pour remédier à ces problèmes, nous optons comme solution la conception et la réalisation d'un système intelligent de détection des plagiats dans les rapports académiques. Cette solution vise à automatiser la comparaison des documents soumis avec une base de référence constituée des travaux déjà soutenus, à générer un score de similarité objectif et documenté, et à fournir aux enseignants, membres du jury et personnel administratif un outil fiable et traçable pour appuyer leurs décisions d'évaluation.
+
+CONCLUSION
+
+En définitive, le diagnostic de l'existant a révélé des lacunes substantielles dans les pratiques actuelles de détection du plagiat au sein de l'établissement. Le recours exclusif à l'appréciation humaine engendre des inefficacités notables, notamment en matière de systématicité, d'objectivité et de traçabilité du contrôle. Par ailleurs, la sous-exploitation des archives de rapports précédemment soutenus prive l'établissement d'une ressource pourtant précieuse pour objectiver cette vérification.
+
+
+                                             ANALYSE
+
+
+rios
+Orchestrated comprehensive use case model with actors, relationships, and twenty-one integrated scenarios
+
+Voici la synthèse complète et définitive, intégrant toutes les décisions qu'on a prises au fil de la conversation (double bénéfice étudiant/encadrant, double mode de déclenchement).
+
+1. Acteurs principaux
+Acteur	Rôle dans le système
+Étudiant	Soumet son document, consulte son propre rapport de similarité
+Encadrant/Jury	Consulte les rapports de ses étudiants, déclenche des analyses manuelles, prend des décisions
+Administrateur	Gère la base de référence, les comptes et la configuration du système
+
+Ces trois acteurs héritent d'un acteur abstrait Utilisateur authentifié (généralisation), qui porte le besoin commun de s'authentifier (CU1).
+
+2. Acteurs secondaires
+
+C'est le point qu'on avait clarifié ensemble : dans l'architecture actuelle (tout tourne localement, aucune API externe), il n'y a en réalité qu'un seul acteur secondaire potentiel, et il est particulier :
+
+Planificateur système / Minuteur : c'est l'élément qui déclenche automatiquement l'analyse à l'échéance configurée (le mode "automatique" du déclenchement, décidé plus tôt). En UML, un événement temporel qui déclenche une action sans intervention humaine est classiquement modélisé comme un acteur externe (parfois appelé acteur "Temps" ou "Horloge"), car il agit depuis l'extérieur du flux métier normal, même s'il est techniquement implémenté à l'intérieur de ton propre système (un scheduler/cron en Python). Nuance à connaître pour ta soutenance : certains jurys/méthodologies considèrent au contraire qu'un scheduler interne à l'application n'est pas un vrai acteur externe (puisqu'il ne sort pas des frontières physiques du système). Les deux positions sont défendables — je te conseille de le présenter comme acteur secondaire, mais en étant prête à justifier ce choix si on te pose la question.
+Service SMTP (uniquement si tu retiens la fonctionnalité optionnelle d'envoi d'email, CU21) — sinon, il n'existe pas dans ta version de base.
+3. Liste complète des cas d'utilisation avec leurs acteurs
+N°	Cas d'utilisation	Acteur(s) associé(s)
+CU1	S'authentifier	Étudiant, Encadrant, Administrateur
+CU2	Uploader un document	Étudiant
+CU3	Analyser un document	Encadrant (déclenchement manuel), Planificateur système (déclenchement automatique à l'échéance)
+CU4	Consulter le rapport de similarité	Étudiant (son propre rapport), Encadrant (rapports de ses étudiants)
+CU5	Télécharger le rapport PDF	Étudiant
+CU6	Consulter l'historique des analyses	Étudiant
+CU7	Extraire le texte du document	Système (interne)
+CU8	Prétraiter le texte	Système (interne)
+CU9	Calculer la similarité	Système (interne)
+CU10	Générer le rapport	Système (interne)
+CU11	Filtrer/trier les documents par score	Encadrant
+CU12	Ajouter un commentaire/décision	Encadrant
+CU13	Gérer la base de documents de référence	Administrateur
+CU14	Gérer les comptes utilisateurs	Administrateur
+CU15	Configurer le seuil d'alerte et l'échéance de dépôt	Administrateur
+CU16	Surligner les passages suspects	Système (interne)
+CU17	Appliquer l'OCR	Système (interne)
+CU18	Signaler une erreur de format	Système (interne)
+CU19	Exclure certaines sections (biblio/annexes)	Système (interne)
+CU20	Déclencher une alerte immédiate	Système (interne)
+CU21	Envoyer le rapport par email (optionnel)	Système (interne) + Service SMTP (secondaire)
+4. Toutes les relations
+
+Généralisation
+
+Étudiant, Encadrant, Administrateur → héritent de Utilisateur authentifié (pour CU1)
+
+Associations directes (hors CU1, déjà couvert)
+
+Étudiant → CU2, CU4, CU5, CU6
+Encadrant → CU3 (manuel), CU4, CU11, CU12
+Administrateur → CU13, CU14, CU15
+Planificateur système → CU3 (automatique)
+
+Relations <<include>> (obligatoires)
+
+CU3 inclut CU7, CU8, CU9, CU10
+
+Relations <<extend>> (optionnelles/conditionnelles)
+
+CU12 étend CU4 (ajouter un commentaire est optionnel à la consultation)
+CU16 étend CU9 (surlignage si score > seuil)
+CU17 étend CU7 (OCR si PDF scanné)
+CU18 étend CU7 (erreur si format invalide)
+CU19 étend CU8 (exclusion de sections si détectées)
+CU20 étend CU9 (alerte immédiate si score > seuil critique)
+CU21 étend CU10 (envoi par email si option activée)
+Le changement important par rapport à nos tout premiers échanges
+
+CU3 n'est plus associé à l'Étudiant. Avec le modèle institutionnel qu'on a retenu (l'encadrant/jury reste décisionnaire, l'analyse peut être automatique ou manuelle), le simple fait qu'un étudiant dépose son document (CU2) ne déclenche plus l'analyse — c'est soit l'échéance configurée, soit l'encadrant, qui déclenche CU3. L'étudiant garde uniquement le droit de consulter le résultat une fois qu'il est disponible (CU4).
+
+FICHIER DECOUPAGE...
+
+"""
+Module de découpage en sections — nouvelle étape du prétraitement (CU8 étendu),
+qui répond à la recommandation de l'encadrant académique : analyser le
+document dossier par dossier plutôt que dans son ensemble, en s'appuyant
+sur le canevas officiel de l'IAI.
+
+Ce découpage doit s'exécuter APRÈS l'extraction du texte brut (extraction.py)
+et AVANT le nettoyage/lemmatisation classique (pretraitement.py) : chaque
+section obtenue ici sera ensuite prétraitée et comparée séparément.
+"""
+
+import re
+
+
+class DecoupeurSections:
+    """
+    Découpe un texte brut en sections, en repérant les titres officiels
+    des dossiers du canevas IAI, quelle que soit leur casse ou leur
+    numérotation exacte (romaine, arabe, avec ou sans "DOSSIER").
+    """
+
+    # Chaque section possède plusieurs façons possibles d'être écrite
+    # dans un rapport réel (on l'a vérifié sur un vrai rapport IAI) :
+    # "DOSSIER I: L'EXISTANT", "Dossier 1 : L'existant", etc.
+    SECTIONS_CANEVAS = {
+        "Existant": [
+            r"dossier\s*(i|1)\s*:?\s*l.?existant",
+        ],
+        "Cahier de Charge": [
+            r"dossier\s*(ii|2)\s*:?\s*cahier\s*(de|des)\s*charges?",
+        ],
+        "Analyse": [
+            r"dossier\s*(iii|3)\s*:?\s*analyse",
+        ],
+        "Conception": [
+            r"dossier\s*(iv|4)\s*:?\s*conception",
+        ],
+        "Realisation": [
+            r"dossier\s*(v|5)\s*:?\s*realisation",
+        ],
+        "Tests": [
+            r"dossier\s*(vi|6)\s*:?\s*tests?\s*(et\s*realisation)?",
+        ],
+        "Guide": [
+            r"dossier\s*(vii|7)\s*:?\s*guide\s*d.?installation",
+        ],
+    }
+
+    def _normaliser(self, texte: str) -> str:
+        """Retire les accents pour fiabiliser la recherche des titres (ex: 'é' -> 'e')."""
+        remplacements = {
+            "é": "e", "è": "e", "ê": "e", "à": "a", "ù": "u",
+            "ô": "o", "î": "i", "ç": "c", "'": ".", "’": ".",
+        }
+        texte_normalise = texte.lower()
+        for accent, sans_accent in remplacements.items():
+            texte_normalise = texte_normalise.replace(accent, sans_accent)
+        return texte_normalise
+
+    def decouper(self, texte_brut: str) -> dict:
+        """
+        Point d'entrée principal.
+        Retourne un dictionnaire {nom_section: texte_de_la_section}.
+        Une section absente du document (ex: rapport encore incomplet)
+        est simplement absente du dictionnaire retourné.
+        """
+        texte_normalise = self._normaliser(texte_brut)
+
+        # 1. On repère la position (index de caractère) où commence chaque section
+        positions_trouvees = []  # liste de (position, nom_section)
+
+        for nom_section, motifs in self.SECTIONS_CANEVAS.items():
+            for motif in motifs:
+                correspondance = re.search(motif, texte_normalise)
+                if correspondance:
+                    positions_trouvees.append((correspondance.start(), nom_section))
+                    break  # on a trouvé cette section, pas besoin des autres motifs
+
+        # 2. On trie les sections trouvées par ordre d'apparition dans le document
+        positions_trouvees.sort(key=lambda paire: paire[0])
+
+        # 3. On découpe le texte ORIGINAL (pas normalisé) entre chaque position trouvée
+        sections = {}
+        for index, (position_debut, nom_section) in enumerate(positions_trouvees):
+            est_derniere_section = index == len(positions_trouvees) - 1
+            position_fin = (
+                len(texte_brut)
+                if est_derniere_section
+                else positions_trouvees[index + 1][0]
+            )
+            sections[nom_section] = texte_brut[position_debut:position_fin].strip()
+
+        return sections
+
+
+if __name__ == "__main__":
+    # Petit test manuel : à lancer avec `python -m app.services.decoupage_sections`
+    exemple = """
+    Introduction générale du mémoire...
+
+    DOSSIER I: L'EXISTANT
+    Ce dossier présente l'analyse de l'existant...
+    Beaucoup de texte ici sur le contexte...
+
+    DOSSIER II : CAHIER DE CHARGE
+    Le cahier des charges est un document contractuel...
+
+    DOSSIER III : ANALYSE
+    Cette section présente les diagrammes UML...
+    """
+
+    decoupeur = DecoupeurSections()
+    resultat = decoupeur.decouper(exemple)
+
+    for nom_section, contenu in resultat.items():
+        print(f"--- {nom_section} ({len(contenu)} caractères) ---")
+        print(contenu[:100], "...\n")
+
+
+
+
+                      I.        PRESENTATION
+DU THEME
+	L'évaluation des travaux
+académiques (rapports de fin d'études, exposés, projets de soutenance)
+constitue une composante essentielle du processus pédagogique, car elle atteste
+du niveau réel de compétence et d'effort fourni par chaque étudiant. Cependant,
+plusieurs établissements d'enseignement supérieur, notamment l'IAI Cameroun,
+continuent de s'appuyer exclusivement sur l'appréciation humaine des
+enseignants et des membres du jury pour détecter d'éventuels cas de plagiat.
+Cette méthode présente aujourd'hui de nombreuses limites face à la quantité
+croissante de travaux à évaluer chaque année, ainsi qu'à la sophistication grandissante
+des pratiques de plagiat (copie intégrale d'anciens rapports, réutilisation de
+passages sans citation, léger reformulation superficielle). Dans cette optique,
+la mise en place d'un système intelligent de détection des plagiats apparaît
+comme une solution innovante permettant d'automatiser, de fiabiliser et de
+tracer la vérification de l'authenticité des rapports académiques.
+
+                 II.        ETUDE DE L’EXISTANT
+	L'analyse des pratiques de
+vérification de l'authenticité des travaux académiques au sein de l'IAI Cameroun
+révèle l'adoption exclusive d'une méthode manuelle et informelle. La détection
+du plagiat repose actuellement sur la vigilance individuelle des enseignants et
+des membres du jury, qui s'appuient sur leur mémoire personnelle et leur
+expérience pour reconnaître d'éventuelles similitudes avec d'anciens rapports
+déjà soutenus. Aucun outil informatique dédié n'est utilisé pour comparer
+systématiquement un nouveau rapport avec les travaux précédemment archivés. Les
+anciens mémoires et rapports de stage, bien que conservés dans les archives de
+l'établissement (format papier ou fichiers numériques dispersés), ne sont
+exploités comme base de comparaison que de manière ponctuelle et non
+systématique, lorsqu'un enseignant a un doute particulier sur un document. Cette
+situation soulève des problématiques significatives en matière d'équité entre
+étudiants, de fiabilité de l'évaluation, et de crédibilité académique de
+l'établissement.
+ 
+
+              III.        CRITIQUE DE L’EXISTANT
+     1.     Critique de l’existant
+Tableau 3:
+Critique de l'existant
+
+ 
+  
+  CRTIQUES
+
+  
+  
+  LIMITES
+
+  
+  
+  SOLUTIONS
+
+  
+ 
+ 
+  
+  Détection manuelle basée sur la mémoire humaine 
+
+  
+  
+  -       
+  Dépendance à la
+  seule mémoire et vigilance individuelle de l’enseignant 
+
+  -       
+  Impossible de
+  comparer un rapport un rapport à l’ensemble des rapports déjà soutenus
+
+  
+  
+  -       
+  Mise en place d’un
+  système automatisé de comparaison textuelle entre les documents
+
+  -       
+  Constitution d’une
+  base de référence numérique regroupant l’ensemble des anciens rapports. 
+
+  
+ 
+ 
+  
+  Absence
+  d’outil de mesure objective
+
+  
+  
+  -       
+  Absence de score
+  chiffré ou de preuve documentée en cas de suspections
+
+  -       
+  Décision reposant
+  sur une appréciation subjective, difficilement contestable ou défendable
+  devant une commission
+
+  
+  
+  -       
+  Génération
+  automatique d’un score de similarité par document
+
+  -       
+  Production d’un
+  rapport détaillé, objectif et traçable localisant les passages suspects.
+
+  
+ 
+ 
+  
+  Archives sous
+  exploités
+
+  
+  
+  -       
+  Les anciens rapports
+  bien que concernés ne sont pas centralisés ni interrogeable informatiquement
+
+  -       
+  Recherche de
+  similarité se fait au cas par cas de façon très chronophage.
+
+  
+  
+  -       
+  Numérisation et
+  centralisation des anciens rapports dans une base de donnée de référence
+
+  -       
+  Indexation
+  permettant une comparaison automatique à chaque nouveau dépôt 
+
+  
+ 
+ 
+  
+  Absence de traçabilité
+  du contrôle
+
+  
+  
+  -       
+  Impossible de
+  prouver qu’un contrôle d’authenticité a bien été réalisé
+
+  -       
+  Aucun historique des
+  vérifications effectué
+
+  
+  
+  -       
+  Journalisation systémique  de chaque analyse (date, score, décision de
+  l’encadrant) dans le système.
+
+  
+  
+
+     2.     Comparaison entre les solutions
+existantes
+
+ 
+  
+  Produits
+
+  
+  
+  Critiques 
+
+  
+  
+  Limites
+
+  
+ 
+ 
+  
+  Turnitin
+  
+
+  
+  
+   
+
+  
+  
+   
+
+  
+ 
+ 
+  
+  Compilatio
+  
+
+  
+  
+   
+
+  
+  
+   
+
+  
+ 
+ 
+  
+  PlagiCheck
+  
+
+  
+  
+   
+
+  
+  
+   
+
+  
+  
+
+              IV.        PROBLÉMATIQUE
+	Face à ces constats, la question
+suivante se pose : comment permettre à
+l'IAI Cameroun d'assurer une vérification systématique, objective et tracée de
+l'authenticité des rapports académiques soumis par ses étudiants, sans reposer
+uniquement sur la mémoire et l'appréciation individuelle des enseignants ?
+
+                  V.        PROPOSITION
+de SOLUTION 
+	Pour remédier à ces problèmes,
+nous optons comme solution la conception et la réalisation d'un système
+intelligent de détection des plagiats dans les rapports académiques. Cette
+solution vise à automatiser la comparaison des documents soumis avec une base
+de référence constituée des travaux déjà soutenus, à générer un score de
+similarité objectif et documenté, et à fournir aux enseignants, membres du jury
+et personnel administratif un outil fiable et traçable pour appuyer leurs
+décisions d'évaluation.
+ 
+ 
+ 
+ 
+ 
+ 
+
+CONCLUSION
+	En définitive, le diagnostic de
+l'existant a révélé des lacunes substantielles dans les pratiques actuelles de détection
+du plagiat au sein de l'établissement. Le recours exclusif à l'appréciation
+humaine engendre des inefficacités notables, notamment en matière de
+systématicité, d'objectivité et de traçabilité du contrôle. Par ailleurs, la
+sous-exploitation des archives de rapports précédemment soutenus prive
+l'établissement d'une ressource pourtant précieuse pour objectiver cette
+vérification.
+
+ 
+DOSSIER 2 : CAHIER DE CHARGE
+ 
+
+Résumé :
+ 
+ 
+ 
+ 
+
+Plan:
+
+ 
+
+  
+   
+  
+  
+   
+   
+  
+ 
+ 
+ 
+INTRODUCTION
+            
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+ 
+
+                     I.        CONTEXTE ET JUSTIFICATION
+     1.     Contexte
+	Dans un monde où la digitalisation transforme
+progressivement chaque secteur, le domaine académique ne fait pas exception. La
+vérification manuelle de l'authenticité des rapports académiques pose de nombreuses
+limites : lenteur, subjectivité, absence de traçabilité et risque élevé de cas
+de plagiat non détectés. Ce projet vise à y remédier par la mise en place d'un
+système numérique intelligent, plus rapide, objectif et adapté aux besoins
+actuels de l'établissement.
+
+     2.     Justification
+	Ce projet est justifié par la nécessité d'améliorer la
+fiabilité, l'objectivité et la traçabilité du contrôle d'authenticité des
+travaux académiques. Il apporte une réponse concrète aux limites du système
+actuel, tout en renforçant l'équité entre étudiants et la crédibilité
+académique de l'établissement.
+
+                 II.        BENEFICIAIRE ET CIBLE
+     1.     Bénéficiaires
+ 
+v Les enseignants
+et membres du jury, qui gagnent en efficacité, en objectivité et en
+fiabilité dans l'évaluation des travaux académiques ;
+v Les étudiants,
+qui bénéficient d'une évaluation plus équitable et d'un retour pédagogique sur
+l'originalité de leur travail ;
+v L'établissement
+(IAI Cameroun), qui renforce sa crédibilité académique et réduit les
+risques liés à une détection de plagiat purement manuelle.
+
+     2.     Cible
+	Le projet s'adresse en priorité au personnel
+enseignant et administratif chargé de l'évaluation des travaux académiques.
+Cela inclut notamment les encadrants, les membres du jury de soutenance et les
+responsables pédagogiques, qui interagissent directement avec les rapports
+soumis par les étudiants.
+ 
+
+              III.        LES OBJECTIFS DE L’ETUDE DU PROJET
+ 
+
+     1.     Objectif général 
+	L'objectif général est de concevoir et développer un
+système intelligent de détection des plagiats performant, sécurisé et fiable,
+afin d'améliorer l'objectivité et l'efficacité du processus d'évaluation des
+travaux académiques au sein de l'établissement.
+
+     2.     Objectifs spécifiques 
+	La réalisation de l'objectif global dans un projet passe nécessairement
+par l'accomplissement des objectifs spécifiques qui se réalisent au fur et à
+mesure que le projet avance. Dans le cas de notre travail, les objectifs
+spécifiques sont les suivants :
+v Mettre en
+place un système d'authentification sécurisé ;
+v Automatiser
+l'extraction et le prétraitement des textes soumis ;
+v Développer
+un algorithme de comparaison et de similarité textuelle (lexicale et
+sémantique) entre documents ;
+v Constituer
+une base de référence numérique des travaux académiques déjà soutenus
+v Générer
+automatiquement un rapport de score de similarité, avec localisation des
+passages suspects ;
+v Garantir
+la traçabilité des analyses effectuées ;
+v Proposer
+une interface ergonomique et accessible aux enseignants et étudiants.
+
+              IV.        EXPRESSION DES BESOINS UTILISATEUR 
+     1.      Besoins fonctionnels 
+	Il s'agit des fonctionnalités qui décrivent l'ensemble des besoins
+attendus du système pour assurer la prise en charge efficace des tâches liées à
+la détection des plagiats. 
+	L'étudiant est l'utilisateur qui soumet ses travaux pour
+vérification.
+v Authentification
+sécurisée sur la plateforme
+v Uploadé de
+son document (rapport, mémoire) en format PDF ou Word
+v Consultation
+de son propre rapport de similarité (score, passages suspects)
+v Téléchargement
+de son rapport au format PDF
+v Consultation
+de l'historique de ses analyses précédentes
+L'encadrant/jury évalue les travaux et exploite les résultats
+d'analyse.
+v Consultation
+des rapports de similarité de l'ensemble des étudiants sous sa responsabilité
+v Filtrage
+et tri des documents par taux de similarité
+v Ajout d'un
+commentaire ou d'une décision sur un rapport
+v Déclenchement
+manuel d'une analyse à tout moment, en complément du déclenchement automatique
+à l'échéance de dépôt
+L'administrateur supervise le bon fonctionnement du système et la
+sécurité des données.
+v Gestion de
+la base de documents de référence (ajout, suppression, mise à jour des anciens
+rapports)
+v Gestion
+des comptes utilisateurs et de leurs rôles
+v Configuration
+du seuil d'alerte de similarité et de l'échéance de dépôt automatique
+v Génération
+de statistiques sur l'activité du système
+
+     2.     Objectifs non fonctionnels
+	Il s'agit de définir les contraintes techniques, qualitatives et
+organisationnelles auxquelles le système doit répondre pour assurer un
+fonctionnement optimal et conforme aux exigences des utilisateurs.
+v Performance
+: le système doit être rapide. Par exemple, l'analyse d'un document standard
+(10 à 50 pages) ne doit pas dépasser 1 minute.
+v Sécurité
+: les documents académiques soumis sont sensibles avant soutenance. Le système
+doit garantir la confidentialité (l'étudiant ne voit que son propre rapport,
+l'encadrant ne voit que les documents sous sa responsabilité) et l'intégrité
+des données. L'accès doit être protégé par une authentification sécurisée.
+v Fiabilité
+: le système doit minimiser les faux positifs et les faux négatifs dans la détection
+de similarité, avec des sauvegardes régulières pour ne pas perdre les données.
+v Ergonomie/Utilisabilité
+: l'interface utilisateur doit être simple, intuitive et facile à utiliser pour
+l'étudiant, l'encadrant et l'administrateur.
+v Évolutivité
+: le système doit pouvoir s'adapter à une augmentation du volume de rapports
+archivés chaque année, sans dégradation majeure des performances.
+ 
+
+                  V.        PLANIFICATION DU PROJET
+     1.     Intervenants du projet
+	 La réussite de ce projet repose sur plusieurs acteurs clés ayant chacun un rôle bien défini tout au long
+du cycle de vie ce cette application. Ces participants sont entre autres :
+Tableau 4:
+Intervenants du projet
+
+ 
+  
+  Noms et prénoms
+
+  
+  
+  	Fonction
+
+  
+  
+  Rôle
+
+  
+ 
+ 
+  
+  M. MBAM Freddy
+
+  
+  
+  Enseignant à l’IAI
+
+  
+  
+  Encadreur académique
+
+  
+ 
+ 
+  
+  M. KENNE Aurel
+
+  
+  
+  Ingénieur
+  des travaux informatiques
+
+  
+  
+  Encadreur
+  professionnel
+
+  
+ 
+ 
+  
+  M. KOSSO ABANGA Stéphane
+
+  
+  
+  Enseignant à l’IAI Cameroun
+
+  
+  
+  Encadreur assistant
+
+  
+ 
+ 
+  
+  ANDEME ABESSOLO Rosy
+
+  
+  
+   Etudiante à l’IAI Cameroun
+
+  
+  
+   Stagiaire 
+
+  
+  
+
+     2.     Diagramme de Gantt
+	Cette étape nous permettra de
+représenter la répartition des taches sur des intervalles de temps de temps
+bien définis. Pour cette planification, nous ferons appel au logiciel Gantt
+Project. Nous obtiendrons donc un chronogramme de Gantt qui se représentera
+visuellement l’état d’avancement de nos taches.
+Insérez votre diagramme de Gant ici… 
+
+              VI.        CHARTE GRAPHIQUE
+
+     1.     Logo
+Le logo de…. 
+
+     2.     Typographie
+	Pour notre application, nous
+avons utilisé une typographie simple et lisible afin de garantir une bonne
+accessibilité et une expérience utilisateur fluide :
+
+     3.     Palette de couleur
+ 
+
+           VII.        ESTIMATION
+DU COUT PROJET
+     1.     Ressources matérielles
+Tableau 5:
+Ressources logicielles du projet
+
+ 
+  
+  Ressource 
+
+  
+  
+  Quantité
+
+  
+  
+  Cout unitaire(FCFA)
+
+  
+  
+  Cout total(FCFA)
+
+  
+ 
+ 
+  
+  Ordinateur
+  portable
+
+  
+  
+  1
+
+  
+  
+  Cout
+  unitaire 1
+
+  
+  
+  Cout  total 1
+
+  
+ 
+ 
+  
+  Modem
+  wifi avec forfait mensuel
+
+  
+  
+  1
+
+  
+  
+  Cout unitaire 2
+
+  
+  
+  Cout  total 2
+
+  
+ 
+ 
+  
+  Ondulateur
+  régulateur de tension
+
+  
+  
+  1
+
+  
+  
+  Cout
+  unitaire 3
+
+  
+  
+  Cout  total 3
+
+  
+ 
+ 
+  
+  Clé
+  USB 16giga
+
+  
+  
+  1
+
+  
+  
+  Cout unitaire 4
+
+  
+  
+  Cout total  4
+
+  
+  
+ 
+ 
+                                         
+
+     2.     Ressources logicielles
+ 
+Tableau 6:
+Ressources logicielles du projet
+
+ 
+  
+              Ressources
+
+  
+  
+  	Description
+
+  
+  
+  	Cout estimé
+
+  
+ 
+ 
+  
+  Windows 11
+
+  
+  
+  Système d’exploitation
+
+   
+
+  
+  
+   
+
+  
+ 
+ 
+  
+  Python
+
+  
+  
+  Language de programmation
+
+  
+  
+  	gratuit
+
+  
+ 
+ 
+  
+   FastAPI
+
+  
+  
+  Framework back end
+
+  
+  
+  	gratuit
+
+  
+ 
+ 
+  
+   Visual Studio Code
+
+  
+  
+  Editeur de texte
+
+  
+  
+  	gratuit
+
+  
+ 
+ 
+  
+  Draw.io
+
+  
+  
+  Outil de modélisation UML
+
+  
+  
+  	gratuit
+
+  
+ 
+ 
+  
+  Microsoft Office 365 
+
+  
+  
+  Traitement de texte
+
+  
+  
+  57500FCFA
+
+  
+ 
+ 
+  
+  COUT TOTAL= 
+
+  
+  
+
+     3.     Ressources humaines
+ 
+Tableau 7:
+Ressources humaines du projet
+
+ 
+  
+  Fonction
+          Quantité 
+
+  
+  
+  Description
+  
+
+  
+  
+  Cout
+  (jour
+
+  /semaine)
+  
+
+  
+  
+  Jour
+  
+
+  
+  
+  Cout
+  total en 
+
+  FCFA
+  
+
+  
+ 
+ 
+  
+  Chef projet 
+
+  
+  
+   
+
+  
+  
+   
+
+  
+  
+   
+
+  
+  
+   
+
+  
+  
+   
+
+  
+ 
+ 
+  
+  Analyste 
+
+  Concepteur 
+
+  
+  
+   
+
+  
+  
+   
+
+  
+  
+   
+
+  
+  
+   
+
+  
+  
+   
+
+  
+ 
+ 
+  
+   
+
+  Développeur 
+
+   
+
+  
+  
+   
+
+  02 
+
+  
+  
+  Il implémente la solution à
+
+  l’aide des directives de l’analyste
+
+  
+  
+   
+
+  100 000 
+
+  
+  
+   
+
+  20 
+
+  
+  
+   
+
+   
+
+  400.000 
+
+  
+ 
+ 
+  
+  Testeur 
+
+  
+  
+  01 
+
+  
+  
+   
+
+  Effectuer les tests unitaires afin de valider la solution obtenue 
+
+   
+
+  
+  
+   
+
+  50 000 
+
+  
+  
+   
+
+   
+
+  40 
+
+  
+  
+   
+
+   
+
+  100.000 
+
+  
+ 
+ 
+  
+  Formateur 
+
+  
+  
+   
+
+  01 
+
+  
+  
+  Montrer le fonctionnement nt du logiciel 
+
+   
+
+  
+  
+   
+
+  100 000 
+
+  
+  
+   
+
+  2 
+
+  
+  
+   
+
+  100.000 
+
+  
+ 
+ 
+  
+  Maintenicien n 
+
+  
+  
+   
+
+  01 
+
+  
+  
+   
+
+  
+  
+   
+
+  60 000 
+
+  
+  
+   
+
+   
+
+  
+  
+   
+
+   
+
+  
+ 
+ 
+  
+   
+
+  
+  
+   
+
+  
+  
+  Assurer la mise à jour des logiciels pour intégrer les
+  nouvelles fonctionnalités
+
+  S,         les 
+
+  améliorations, les corrections et les bugs 
+
+  
+  
+   
+
+  
+  
+   
+
+  7(Dépend             des
+  
+
+  burgs) 
+
+  
+  
+  408.331 
+
+  
+ 
+ 
+  
+     TOTAL=                                                                                                          
+  7758 331Fcfa 
+
+  
+  
+ 
+
+     4.     Cout total du projet
+Tableau 8:
+cout total du projet
+
+ 
+  
+  Ressources matérielles
+
+  
+  
+  Cout  total
+  
+
+  
+ 
+ 
+  
+  Ressources logiciels
+
+  
+  
+  Cout  total 
+
+  
+ 
+ 
+  
+  Ressources humaines
+
+  
+  
+  Cout  total 
+
+  
+ 
+ 
+  
+  Total provisoire
+
+  
+  
+  Cout  total 
+
+  
+ 
+ 
+  
+  Imprévus (10 ou 20%)
+
+  
+  
+  Cout  total 
+
+  
+ 
+ 
+  
+  Total
+
+  
+  
+  Cout  total 
+
+  
+  
+ 
+ 
+ 
+ 
+ 
+
+     5.     Contraintes du projet
+ 
+
+     6.     Les livrables
+	Notre projet sera jugé si et
+seulement si les livrables ci-dessous sont achevés au terme de la réalisation
+de notre travail, un rapport de stage composé de :
+v Un dossier insertion
+v Cahier de charge
+v Dossier d’analyse
+v Dossier de conception 
+v Dossier de réalisation
+v Test de fonctionnalité
+v Guide d’utilisation et d’installation
+v Un code source
+ 

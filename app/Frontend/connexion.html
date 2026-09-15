@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connexion — PlagiCheck</title>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root { --vert: #0E7C7B; --bleu: #3B82F6; }
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    font-family: "IBM Plex Sans", sans-serif;
+    background: #050814;
+    overflow: hidden; position: relative;
+  }
+
+  /* Image de fond nette et lumineuse, juste légèrement reculée (zoom arrière) */
+  body::before {
+    content: ""; position: fixed; inset: -150px;
+    background: url('images/ia-analyse.png') center/cover no-repeat;
+    transform: scale(0.88);
+    z-index: -1;
+  }
+
+  /* Bordure dégradée animée qui dessine le contour de la carte */
+  .carte-enveloppe {
+    position: relative; z-index: 1; padding: 1.5px; border-radius: 22px;
+    background: linear-gradient(120deg, var(--vert), var(--bleu), var(--vert));
+    background-size: 200% 200%;
+    animation: degrade 6s ease infinite, apparaitre 0.6s ease both;
+  }
+  @keyframes degrade { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+  @keyframes apparaitre { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* La carte : très transparente, juste un fin contour, on voit le fond net à travers */
+  .carte {
+    width: min(370px, 90vw); padding: 2.2rem 2rem; border-radius: 20px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.35);
+    color: #fff;
+  }
+
+  .carte h1 { font-family: "Newsreader", serif; font-size: 1.6rem; margin: 0 0 0.2rem; text-align: center; text-shadow: 0 1px 6px rgba(0,0,0,0.4); }
+  .carte p.sous { text-align: center; font-size: 0.85rem; color: #E5E9F0; margin: 0 0 1.6rem; text-shadow: 0 1px 4px rgba(0,0,0,0.4); }
+
+  label { display: block; font-size: 0.8rem; font-weight: 600; margin: 1rem 0 0.4rem; color: #E5E9F0; text-shadow: 0 1px 4px rgba(0,0,0,0.4); }
+
+  .champ { position: relative; }
+  .champ input {
+    width: 100%; padding: 0.7em 2.6em 0.7em 0.9em; border-radius: 10px; font-size: 0.92rem;
+    background: rgba(255,255,255,0.08); border: 1.5px solid rgba(255,255,255,0.35); color: #fff;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+  .champ input::placeholder { color: #D7DCE6; }
+  .champ input:focus { outline: none; border-color: var(--vert); background: rgba(255,255,255,0.14); }
+  .icone-oeil {
+    position: absolute; right: 0.8em; top: 50%; transform: translateY(-50%);
+    cursor: pointer; color: #E5E9F0; display: flex;
+  }
+  .icone-oeil:hover { color: #fff; }
+
+  button.principal {
+    width: 100%; margin-top: 1.6rem; padding: 0.8em; border: none; border-radius: 999px;
+    font-weight: 700; font-size: 0.95rem; color: #fff; cursor: pointer;
+    background: linear-gradient(120deg, var(--vert), var(--bleu));
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  button.principal:hover { transform: translateY(-2px); box-shadow: 0 10px 24px -8px rgba(59,130,246,0.5); }
+
+  .separateur { display: flex; align-items: center; gap: 0.8rem; margin: 1.5rem 0 1.1rem; color: #D7DCE6; font-size: 0.78rem; }
+  .separateur::before, .separateur::after { content: ""; flex: 1; height: 1px; background: rgba(255,255,255,0.3); }
+
+  .boutons-sociaux { display: flex; gap: 0.8rem; }
+  .bouton-social {
+    flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.5em;
+    padding: 0.6em; border-radius: 10px; border: 1.5px solid rgba(255,255,255,0.35);
+    background: rgba(255,255,255,0.06); color: #fff; font-size: 0.85rem; font-weight: 600;
+    cursor: pointer; transition: background 0.15s ease;
+  }
+  .bouton-social:hover { background: rgba(255,255,255,0.18); }
+
+  .bas { text-align: center; font-size: 0.82rem; color: #E5E9F0; margin-top: 1.4rem; text-shadow: 0 1px 4px rgba(0,0,0,0.4); }
+  .bas a { color: #7FD1CF; font-weight: 600; text-decoration: none; }
+</style>
+</head>
+<body>
+
+<div class="carte-enveloppe">
+  <div class="carte">
+    <h1>PlagiCheck</h1>
+    <p class="sous">Connectez-vous à votre espace</p>
+
+    <form id="formulaireConnexion">
+      <label for="email">Adresse email</label>
+      <div class="champ">
+        <input type="email" id="email" name="email" placeholder="vous@iai-cameroun.com" required>
+      </div>
+
+      <label for="motDePasse">Mot de passe</label>
+      <div class="champ">
+        <input type="password" id="motDePasse" name="motDePasse" placeholder="••••••••" required>
+        <span class="icone-oeil" id="iconeOeil" title="Afficher le mot de passe">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </span>
+      </div>
+
+      <button type="submit" class="principal">Se connecter</button>
+    </form>
+
+    <div class="separateur">ou continuer avec</div>
+    <div class="boutons-sociaux">
+      <button type="button" class="bouton-social" title="Non connecté (à venir)">
+        <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.99.66-2.26 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.85A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.84 14.09A6.6 6.6 0 0 1 5.48 12c0-.73.13-1.43.36-2.09V7.06H2.18A11 11 0 0 0 1 12c0 1.77.43 3.45 1.18 4.94z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A11 11 0 0 0 2.18 7.06l3.66 2.85C6.71 7.31 9.14 5.38 12 5.38z"/></svg>
+        Google
+      </button>
+      <button type="button" class="bouton-social" title="Non connecté (à venir)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="#1877F2"><path d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.78-3.89 1.1 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.89h-2.34v6.99A10 10 0 0 0 22 12z"/></svg>
+        Facebook
+      </button>
+    </div>
+
+    <p class="bas">Pas encore de compte ? <a href="inscription.html">Créer un compte</a></p>
+  </div>
+</div>
+
+<script>
+ document.getElementById("formulaireConnexion").addEventListener("submit", async function (e) {
+  e.preventDefault();
+
+  const email = document.getElementById("email").value;
+  const motDePasse = document.getElementById("motDePasse").value;
+
+  try {
+    const reponse = await fetch("http://127.0.0.1:8000/auth/connexion", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email, mot_de_passe: motDePasse }),
+    });
+
+    if (!reponse.ok) {
+      const erreur = await reponse.json();
+      alert(erreur.detail || "Email ou mot de passe incorrect.");
+      return;
+    }
+
+    const donnees = await reponse.json();
+
+    localStorage.setItem("utilisateur_id", donnees.utilisateur.id);
+    localStorage.setItem("nom_utilisateur", donnees.utilisateur.nom);
+    localStorage.setItem("role", donnees.utilisateur.role);
+    localStorage.setItem("jeton_acces", donnees.jeton_acces);
+
+    if (donnees.utilisateur.role === "etudiant") {
+      window.location.href = "etudiant.html";
+    } else if (donnees.utilisateur.role === "encadrant") {
+      window.location.href = "enseignant.html";
+    } else if (donnees.utilisateur.role === "administrateur") {
+      window.location.href = "admin.html";
+    }
+
+  } catch (erreur) {
+    alert("Impossible de contacter le serveur.");
+    console.error(erreur);
+  }
+});
+
+const champMotDePasse = document.getElementById("motDePasse");
+const iconeOeil = document.getElementById("iconeOeil");
+
+iconeOeil.addEventListener("click", function () {
+  const estMasque = champMotDePasse.type === "password";
+  champMotDePasse.type = estMasque ? "text" : "password";
+
+  iconeOeil.innerHTML = estMasque
+    ? `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.9 10.9 0 0 1 12 19c-7 0-11-7-11-7a18.6 18.6 0 0 1 5.06-5.94M9.9 4.24A10.9 10.9 0 0 1 12 4c7 0 11 7 11 7a18.6 18.6 0 0 1-2.16 3.19M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`
+    : `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>`;
+}); 
+</script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+fastapi==0.115.0
+uvicorn==0.30.6
+python-multipart==0.0.9
+
+# Extraction de texte
+pymupdf==1.24.10
+python-docx==1.1.2
+
+# NLP et similarité
+spacy==3.7.5
+scikit-learn==1.5.1
+sentence-transformers==3.0.1
+
+# Génération de rapport PDF
+reportlab==4.2.2
+
+# Base de données
+sqlalchemy==2.0.32
+
+# Sécurité (pour plus tard : authentification)
+passlib[bcrypt]==1.7.4
+python-jose[cryptography]==3.3.0
+python-dotenv==1.0.1
+email-validator==2.2.0
