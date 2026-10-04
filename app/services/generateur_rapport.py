@@ -1,21 +1,30 @@
 """
 Génération du rapport PDF (CU10) : assemble le score global, le détail
 par section et les correspondances dans un document téléchargeable.
+
+Sécurité : le dossier de sortie utilise un chemin ABSOLU défini dans la
+configuration, pour éviter tout écriture hors du répertoire autorisé.
 """
 
 import os
 from datetime import datetime
+
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.units import cm
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.platypus import (
+    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+)
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+
+from app.config import DOSSIER_RAPPORTS_GENERES
 
 
 class GenerateurRapport:
 
-    def __init__(self, dossier_sortie: str = "data/rapports_generes"):
-        self.dossier_sortie = dossier_sortie
+    def __init__(self, dossier_sortie: str = None):
+        # Si aucun dossier n'est fourni, on utilise le chemin ABSOLU de la config
+        self.dossier_sortie = dossier_sortie or str(DOSSIER_RAPPORTS_GENERES)
         os.makedirs(self.dossier_sortie, exist_ok=True)
         self.styles = getSampleStyleSheet()
 
@@ -24,23 +33,38 @@ class GenerateurRapport:
         nom_fichier = f"rapport_analyse_{analyse_id}.pdf"
         chemin_complet = os.path.join(self.dossier_sortie, nom_fichier)
 
-        document = SimpleDocTemplate(chemin_complet, pagesize=A4,
-                                      topMargin=2*cm, bottomMargin=2*cm)
+        document = SimpleDocTemplate(
+            chemin_complet, 
+            pagesize=A4,
+            topMargin=2*cm, 
+            bottomMargin=2*cm
+        )
         elements = []
 
         # En-tête du rapport
-        style_titre = ParagraphStyle("TitreRapport", parent=self.styles["Title"], textColor=colors.HexColor("#14213D"))
+        style_titre = ParagraphStyle(
+            "TitreRapport", 
+            parent=self.styles["Title"], 
+            textColor=colors.HexColor("#14213D")
+        )
         elements.append(Paragraph("PlagiCheck — Rapport de similarité", style_titre))
         elements.append(Spacer(1, 0.3*cm))
         elements.append(Paragraph(f"Document analysé : <b>{titre_document}</b>", self.styles["Normal"]))
-        elements.append(Paragraph(f"Date de génération : {datetime.now().strftime('%d/%m/%Y à %H:%M')}", self.styles["Normal"]))
+        elements.append(Paragraph(
+            f"Date de génération : {datetime.now().strftime('%d/%m/%Y à %H:%M')}", 
+            self.styles["Normal"]
+        ))
         elements.append(Spacer(1, 0.5*cm))
 
         # Score global, mis en évidence avec une couleur selon le niveau de risque
         couleur_score = colors.HexColor("#0E7C7B") if score_global < 30 else (
             colors.HexColor("#C99A2E") if score_global < 70 else colors.HexColor("#B3413E")
         )
-        style_score = ParagraphStyle("Score", parent=self.styles["Heading1"], textColor=couleur_score)
+        style_score = ParagraphStyle(
+            "Score", 
+            parent=self.styles["Heading1"], 
+            textColor=couleur_score
+        )
         elements.append(Paragraph(f"Score global de similarité : {score_global}%", style_score))
         elements.append(Spacer(1, 0.6*cm))
 
@@ -70,8 +94,10 @@ class GenerateurRapport:
         elements.append(tableau)
 
         elements.append(Spacer(1, 0.8*cm))
-        note = ("Ce rapport signale des similarités textuelles ; il assiste l'évaluation "
-                "de l'encadrant mais ne constitue pas une décision automatique de plagiat.")
+        note = (
+            "Ce rapport signale des similarités textuelles ; il assiste l'évaluation "
+            "de l'encadrant mais ne constitue pas une décision automatique de plagiat."
+        )
         elements.append(Paragraph(f"<i>{note}</i>", self.styles["Normal"]))
 
         document.build(elements)

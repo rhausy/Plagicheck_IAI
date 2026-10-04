@@ -68,6 +68,7 @@ async def lancer_analyse(
     utilisateur_id_document = document.utilisateur_id
 
     # Chargement du gabarit (tolérant aux erreurs pour ne pas bloquer l'analyse)
+    texte_gabarit = ""
     try:
         document_gabarit = (
             session.query(Document)
@@ -77,7 +78,6 @@ async def lancer_analyse(
         )
         if document_gabarit:
             texte_gabarit = orchestrateur.extracteur.extraire(document_gabarit.chemin_fichier)
-            orchestrateur.neutraliseur.charger_gabarit(texte_gabarit)
     except Exception as e:
         logger.warning(f"Erreur lors du chargement du gabarit : {e}")
 
@@ -108,17 +108,18 @@ async def lancer_analyse(
     analyse_id = analyse.id  # On garde l'ID en local
 
     # Exécution de l'orchestrateur dans un thread séparé (non bloquant)
-    # Permet aux autres utilisateurs de continuer à utiliser l'API pendant l'analyse
     loop = asyncio.get_event_loop()
     try:
         resultat = await loop.run_in_executor(
             None,
             lambda: orchestrateur.analyser(
-                chemin_document, documents_reference, documents_meme_etudiant
+                chemin_document, 
+                documents_reference, 
+                documents_meme_etudiant,
+                texte_gabarit=texte_gabarit  # ← Passage du gabarit en paramètre
             )
         )
     except ErreurExtractionTexte:
-        # On ne renvoie pas le détail technique au client (fuite d'info)
         analyse.statut = "echouee"
         analyse.message_erreur = "Erreur d'extraction"
         session.commit()

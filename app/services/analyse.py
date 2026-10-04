@@ -1,6 +1,9 @@
 """
 Orchestrateur de l'analyse : enchaîne extraction, découpage en sections,
 prétraitement et calcul de similarité pour produire un résultat complet.
+
+Sécurité : chaque analyse crée ses propres instances de traitement pour
+éviter les interférences entre requêtes simultanées (thread-safety).
 """
 
 from app.services.extraction import ExtracteurTexte, ErreurExtractionTexte
@@ -14,29 +17,41 @@ class OrchestrateurAnalyse:
     """Point d'entrée unique pour lancer une analyse complète sur un document."""
 
     def __init__(self):
+        # Extracteur et découpeur sont sans état interne : partagés sans risque
         self.extracteur = ExtracteurTexte()
         self.decoupeur = DecoupeurSections()
-        self.pretraiteur = Pretraiteur()
+        # Le calculateur de similarité contient un modèle lourd, on le partage
+        # car il est en lecture seule après initialisation.
         self.calculateur = CalculateurSimilarite()
-        self.neutraliseur = NeutraliseurGabarit()
+        # ATTENTION : pas de neutraliseur partagé ici !
 
     def analyser(
         self,
         chemin_document_soumis: str,
         documents_reference: list[dict],
         documents_meme_etudiant: list[dict],
+        texte_gabarit: str = "",
     ) -> dict:
         """
         Analyse un document soumis : le compare section par section à la
         base de référence générale, puis aux anciens documents du même étudiant.
+        
+        Args:
+            texte_gabarit: Texte du gabarit déjà extrait (vide si aucun gabarit).
+                           Un neutraliseur local est créé pour cette analyse uniquement.
         """
         texte_brut = self.extracteur.extraire(chemin_document_soumis)
         sections_soumises = self.decoupeur.decouper(texte_brut)
 
+        # Création d'un neutraliseur LOCAL à cette analyse (évite les courses critiques)
+        neutraliseur_local = NeutraliseurGabarit()
+        if texte_gabarit:
+            neutraliseur_local.charger_gabarit(texte_gabarit)
+
         resultats_par_section = {}
 
         for nom_section, texte_section in sections_soumises.items():
-            texte_section_neutralise = self.neutraliseur.neutraliser(texte_section)
+            texte_section_neutralise = neutraliseur_local.neutraliser(texte_section)
             texte_section_propre = self.pretraiteur.pretraiter(
                 texte_section_neutralise
             )
