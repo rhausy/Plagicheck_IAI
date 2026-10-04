@@ -6,7 +6,7 @@ et connexion sécurisée avec session révocable côté serveur.
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session as SessionBDD
 
-from app.config import DUREE_SESSION_MINUTES
+from app.config import DUREE_SESSION_MINUTES, CLE_SECRETE
 from app.database import obtenir_session
 from app.models import Utilisateur
 from app.schemas import InscriptionEntree, ConnexionEntree, UtilisateurReponse, ConnexionReponse
@@ -90,6 +90,15 @@ def connexion(
         "type_jeton": "bearer",
         "duree_minutes": DUREE_SESSION_MINUTES,
     }
+
+
+@router.get("/moi", response_model=UtilisateurReponse)
+def moi(utilisateur: Utilisateur = Depends(obtenir_utilisateur_courant)):
+    """
+    Retourne le profil de l'utilisateur actuellement connecté.
+    Utilisé par le frontend pour vérifier la session au chargement des pages.
+    """
+    return utilisateur
 
 
 @router.post("/deconnexion")
