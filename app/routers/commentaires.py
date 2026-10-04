@@ -12,8 +12,8 @@ from sqlalchemy.orm import Session as SessionBDD
 
 from app.database import obtenir_session
 from app.models import (
-    Analyse, Commentaire, Document,
-    ROLE_ENCADRANT, ROLE_ADMINISTRATEUR
+    Analyse, Commentaire, Document, Utilisateur,
+    ROLE_ENCADRANT, ROLE_ADMINISTRATEUR, ROLE_ETUDIANT
 )
 from app.schemas import CommentaireEntree, CommentaireReponse
 from app.securite import obtenir_utilisateur_courant, limiter_action
@@ -26,7 +26,7 @@ def ajouter_commentaire(
     analyse_id: int,
     donnees: CommentaireEntree,
     session: SessionBDD = Depends(obtenir_session),
-    utilisateur = Depends(obtenir_utilisateur_courant),
+    utilisateur: Utilisateur = Depends(obtenir_utilisateur_courant),
 ):
     # Seuls les encadrants et administrateurs peuvent commenter
     if utilisateur.role not in (ROLE_ENCADRANT, ROLE_ADMINISTRATEUR):
@@ -42,16 +42,21 @@ def ajouter_commentaire(
     if not analyse:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Analyse introuvable.")
 
-    # Vérification : le document analysé doit appartenir à un étudiant (pas à un encadrant/admin)
+    # Vérification : le document analysé doit appartenir à un étudiant
     document = session.query(Document).filter(Document.id == analyse.document_id).first()
     if not document:
         raise HTTPException(status_code=404, detail="Document lié introuvable.")
     
-    document_proprietaire = session.query(utilisateur.__class__).filter(
-        utilisateur.__class__.id == document.utilisateur_id
+    # Récupération du propriétaire du document
+    proprietaire = session.query(Utilisateur).filter(
+        Utilisateur.id == document.utilisateur_id
     ).first()
-    # En pratique, on vérifie simplement que le propriétaire du document est un étudiant
-    # (les encadrants/admins ne déposent pas de soumissions normalement)
+    
+    if not proprietaire or proprietaire.role != ROLE_ETUDIANT:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Seuls les documents appartenant à un étudiant peuvent être commentés."
+        )
 
     # Création du commentaire avec l'ID de l'encadrant depuis le JWT (pas du client)
     nouveau_commentaire = Commentaire(
@@ -71,14 +76,14 @@ def ajouter_commentaire(
 def lister_commentaires(
     analyse_id: int,
     session: SessionBDD = Depends(obtenir_session),
-    utilisateur = Depends(obtenir_utilisateur_courant),
+    utilisateur: Utilisateur = Depends(obtenir_utilisateur_courant),
 ):
     analyse = session.query(Analyse).filter(Analyse.id == analyse_id).first()
     if not analyse:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Analyse introuvable.")
 
     # Contrôle de propriété : un étudiant ne peut voir les commentaires que de ses propres analyses
-    if utilisateur.role == "etudiant":
+    if utilisateur.role == ROLE_ETUDIANT:
         document = session.query(Document).filter(Document.id == analyse.document_id).first()
         if not document or document.utilisateur_id != utilisateur.id:
             raise HTTPException(

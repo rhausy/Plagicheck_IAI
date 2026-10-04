@@ -8,7 +8,7 @@
    - La déconnexion automatique si le jeton est expiré.
 */
 
-const API_BASE_URL = "http://127.0.0.1:8000";
+const API_BASE_URL = window.location.origin;
 
 // --- Gestion du Jeton JWT ---
 
@@ -47,6 +47,15 @@ const Auth = {
     // Supprimer les infos utilisateur
     supprimerUtilisateur() {
         sessionStorage.removeItem("plagicheck_utilisateur");
+    },
+
+    // Nettoyage complet de la session locale
+    viderSession() {
+        this.supprimerJeton();
+        this.supprimerUtilisateur();
+        // Nettoyage des anciennes clés qui ne sont plus utilisées
+        ["utilisateur_id", "nom_utilisateur", "role", "jeton_acces", "type_jeton"]
+            .forEach(cle => localStorage.removeItem(cle));
     }
 };
 
@@ -78,12 +87,12 @@ async function appelAPI(endpoint, options = {}) {
             const erreur = await reponse.json().catch(() => ({ detail: "Erreur 401" }));
             // Ne pas déconnecter si on est en train d'essayer de se connecter
             if (!endpoint.includes("/auth/connexion")) {
-                Auth.supprimerJeton();
-                Auth.supprimerUtilisateur();
-                window.location.href = "/app/connexion.html";
+                Auth.viderSession();
+                window.location.replace("/app/connexion.html");
             }
             throw new Error(erreur.detail || "Session expirée. Veuillez vous reconnecter.");
         }
+        
         // Si le serveur refuse l'accès (403)
         if (reponse.status === 403) {
             const erreur = await reponse.json().catch(() => ({ detail: "Accès refusé" }));
@@ -140,9 +149,8 @@ async function seDeconnecter() {
     } catch (e) {
         // On ignore les erreurs de réseau lors de la déconnexion
     } finally {
-        Auth.supprimerJeton();
-        Auth.supprimerUtilisateur();
-        window.location.href = "/app/connexion.html";
+        Auth.viderSession();
+        window.location.replace("/app/connexion.html");
     }
 }
 

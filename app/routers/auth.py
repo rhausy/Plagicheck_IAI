@@ -115,7 +115,11 @@ def deconnexion(
             from jose import jwt
             charge = jwt.decode(jeton_brut, CLE_SECRETE, algorithms=["HS256"])
             jti = charge.get("jti")
-            if jti:
+            sous = charge.get("sub")
+            
+            # SÉCURITÉ : on ne révoque que si le JWT appartient bien à l'utilisateur connecté.
+            # Empêche un utilisateur de révoquer la session d'un autre en changeant le header.
+            if jti and sous and int(sous) == utilisateur.id:
                 from app.securite import _hacher_jti
                 revoquer_session(session, _hacher_jti(jti))
         except Exception:

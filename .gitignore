@@ -1,17 +1,6 @@
-# --- SECRETS ET CONFIGURATION SENSIBLE ---
-.env
-.env.local
-.env.production
-
-# --- BASE DE DONNÉES ET DONNÉES UTILISATEUR ---
-# On ignore tout le dossier data/ car il contient les PDF des étudiants, 
-# les rapports générés, les journaux et la base SQLite.
-data/
-*.db
-*.sqlite
-*.sqlite3
-
-# --- PYTHON ---
+# ============================================
+# Python
+# ============================================
 __pycache__/
 *.py[cod]
 *$py.class
@@ -32,29 +21,73 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-MANIFEST
 
-# --- ENVIRONNEMENTS VIRTUELS ---
+# ============================================
+# Environnements virtuels
+# ============================================
 venv/
-.venv/
 env/
 ENV/
 env.bak/
 venv.bak/
+.venv/
 
-# --- IDE ET ÉDITEURS ---
-.vscode/
+# ============================================
+# Variables d'environnement / Secrets
+# ============================================
+.env
+.env.local
+.env.*.local
+
+# ============================================
+# Base de données
+# ============================================
+*.db
+*.sqlite
+*.sqlite3
+data/plagicheck.db
+
+# ============================================
+# Fichiers générés / Stockage
+# ============================================
+data/stockage/
+data/rapports_generes/
+data/journaux/
+
+# ============================================
+# Logs
+# ============================================
+*.log
+logs/
+
+# ============================================
+# IDE / Éditeurs
+# ============================================
 .idea/
+.vscode/
 *.swp
 *.swo
 *~
-.DS_Store
 
-# --- TESTS ET COUVERTURE ---
+# ============================================
+# OS
+# ============================================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ============================================
+# Tests et scripts temporaires
+# ============================================
+creer_admin_test.py
+creer_comptes_test.py
+test_*.py
+
+# ============================================
+# Cache
+# ============================================
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
 .coverage
 htmlcov/
-.tox/
-
-# --- JOURNAUX ---
-*.log

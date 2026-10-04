@@ -5,6 +5,7 @@ Sécurité :
 - Les rôles "reference" et "gabarit" sont réservés aux administrateurs.
 - Le nom de fichier sur le disque est généré aléatoirement (anti-traversée).
 - La taille et l'extension sont strictement contrôlées.
+- Détection des doublons par empreinte SHA-256.
 """
 
 import os
@@ -100,10 +101,24 @@ def deposer_document(
             detail="Le contenu du fichier ne correspond pas à un PDF ou un DOCX valide."
         )
 
-    # 6. Calcul de l'empreinte SHA-256 (pour détecter les doublons futurs)
+    # 6. Calcul de l'empreinte SHA-256
     empreinte = empreinte_fichier_sha256(chemin_complet)
 
-    # 7. Enregistrement en base de données
+    # 7. Détection des doublons : si ce même contenu a déjà été déposé par cet utilisateur
+    doublon = session.query(Document).filter(
+        Document.empreinte_sha256 == empreinte,
+        Document.utilisateur_id == utilisateur.id
+    ).first()
+
+    if doublon:
+        # On supprime le fichier qu'on vient d'écrire puisqu'il est identique
+        chemin_complet.unlink(missing_ok=True)
+        raise HTTPException(
+            status_code=409,
+            detail=f"Document déjà déposé sous le titre '{doublon.titre}'."
+        )
+
+    # 8. Enregistrement en base de données
     nouveau_document = Document(
         utilisateur_id=utilisateur.id, # ID sécurisé depuis le JWT
         titre=titre.strip(),

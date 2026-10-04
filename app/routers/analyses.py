@@ -5,8 +5,10 @@ Sécurité :
 - Contrôle de propriété strict (un étudiant ne voit/analyse que ses documents).
 - Limitation de débit pour protéger le CPU (l'analyse est coûteuse).
 - Messages d'erreur génériques pour éviter les fuites d'informations internes.
+- Analyse exécutée de manière non bloquante (thread pool).
 """
 
+import asyncio
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -38,11 +40,10 @@ def _verifier_propriete_document(utilisateur, document: Document):
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Vous n'avez pas accès à ce document."
             )
-    # Les encadrants et administrateurs peuvent analyser n'importe quel document étudiant
 
 
 @router.post("/{document_id}", response_model=AnalyseReponse)
-def lancer_analyse(
+async def lancer_analyse(
     document_id: int,
     request: Request,
     session: SessionBDD = Depends(obtenir_session),
@@ -61,6 +62,11 @@ def lancer_analyse(
     # Vérification de propriété
     _verifier_propriete_document(utilisateur, document)
 
+    # Extraction des données AVANT l'exécution asynchrone pour éviter 
+    # tout accès ORM concurrent dans le thread pool
+    chemin_document = document.chemin_fichier
+    utilisateur_id_document = document.utilisateur_id
+
     # Chargement du gabarit (tolérant aux erreurs pour ne pas bloquer l'analyse)
     try:
         document_gabarit = (
@@ -75,7 +81,7 @@ def lancer_analyse(
     except Exception as e:
         logger.warning(f"Erreur lors du chargement du gabarit : {e}")
 
-    # Récupération des documents de comparaison
+    # Récupération des documents de comparaison (données brutes)
     documents_reference = [
         {"id": doc.id, "chemin": doc.chemin_fichier}
         for doc in session.query(Document).filter(Document.type_document == "reference").all()
@@ -84,7 +90,7 @@ def lancer_analyse(
     documents_meme_etudiant = [
         {"id": doc.id, "chemin": doc.chemin_fichier}
         for doc in session.query(Document).filter(
-            Document.utilisateur_id == document.utilisateur_id, 
+            Document.utilisateur_id == utilisateur_id_document, 
             Document.id != document.id
         ).all()
     ]
@@ -99,11 +105,17 @@ def lancer_analyse(
     session.add(analyse)
     session.commit()
     session.refresh(analyse)
+    analyse_id = analyse.id  # On garde l'ID en local
 
-    # Exécution de l'orchestrateur
+    # Exécution de l'orchestrateur dans un thread séparé (non bloquant)
+    # Permet aux autres utilisateurs de continuer à utiliser l'API pendant l'analyse
+    loop = asyncio.get_event_loop()
     try:
-        resultat = orchestrateur.analyser(
-            document.chemin_fichier, documents_reference, documents_meme_etudiant
+        resultat = await loop.run_in_executor(
+            None,
+            lambda: orchestrateur.analyser(
+                chemin_document, documents_reference, documents_meme_etudiant
+            )
         )
     except ErreurExtractionTexte:
         # On ne renvoie pas le détail technique au client (fuite d'info)
@@ -123,7 +135,7 @@ def lancer_analyse(
     for nom_section, donnees_section in resultat["sections"].items():
         for correspondance in donnees_section["correspondances"]:
             session.add(Correspondance(
-                analyse_id=analyse.id,
+                analyse_id=analyse_id,
                 document_reference_id=correspondance["document_reference_id"],
                 section=nom_section,
                 score_lexical=correspondance["score_lexical"],
@@ -182,7 +194,6 @@ def lister_analyses_etudiant(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Accès refusé : vous ne pouvez consulter que votre propre historique."
         )
-    # Les encadrants et admins peuvent voir l'historique de n'importe quel étudiant
 
     analyses = (
         session.query(Analyse)
