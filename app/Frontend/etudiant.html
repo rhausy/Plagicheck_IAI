@@ -402,7 +402,7 @@
             </ul>
         </div>
 
-        <button class="btn-logout" onclick="window.location.href='login.html'">
+        <button class="btn-logout" id="btn-deconnexion">
             <i class="fa-solid fa-right-from-bracket"></i> Déconnexion
         </button>
     </aside>
@@ -413,8 +413,8 @@
         <div class="top-header">
             <h1>Espace Étudiant</h1>
             <div class="user-profile-top">
-                <div class="avatar-circle">É</div>
-                <div style="font-size: 13px; font-weight: 700;">Étudiant Connecté</div>
+                <div class="avatar-circle" id="avatar-initiale">É</div>
+                <div style="font-size: 13px; font-weight: 700;" id="nom-utilisateur">Étudiant Connecté</div>
             </div>
         </div>
 
@@ -508,16 +508,35 @@
         </div>
     </main>
 
+    <!-- Chargement du module API sécurisé -->
+    <script src="js/api.js"></script>
+
     <script>
-        const API_URL = "http://127.0.0.1:8000";
-        const UTILISATEUR_ID = localStorage.getItem("utilisateur_id") || 1;
         let fichierSelectionne = null;
 
+        // --- 1. VÉRIFICATION DE SÉCURITÉ AU CHARGEMENT ---
         document.addEventListener('DOMContentLoaded', () => {
+            const utilisateur = Auth.obtenirUtilisateur();
+            
+            // Si pas connecté ou pas étudiant, on redirige
+            if (!Auth.estConnecte() || !utilisateur || utilisateur.role !== 'etudiant') {
+                window.location.href = 'connexion.html';
+                return;
+            }
+
+            // Mise à jour de l'interface avec le nom de l'utilisateur
+            document.getElementById('nom-utilisateur').innerText = utilisateur.nom;
+            document.getElementById('avatar-initiale').innerText = utilisateur.nom.charAt(0).toUpperCase();
+
+            // Gestion de la déconnexion sécurisée
+            document.getElementById('btn-deconnexion').addEventListener('click', seDeconnecter);
+
+            // Chargement des données
             chargerHistorique();
             initDragAndDrop();
         });
 
+        // --- 2. GESTION DU FICHIER (DRAG & DROP) ---
         function initDragAndDrop() {
             const dropZone = document.getElementById('drop-zone');
             ['dragenter', 'dragover'].forEach(name => {
@@ -534,12 +553,19 @@
 
         function gererFichier(files) {
             if (files.length === 0) return;
-
             fichierSelectionne = files[0];
+            
+            // Vérification basique de la taille (20 Mo)
+            if (fichierSelectionne.size > 20 * 1024 * 1024) {
+                alert("Le fichier dépasse la taille maximale de 20 Mo.");
+                annulerFichier();
+                return;
+            }
+
             document.getElementById('file-name').innerText = fichierSelectionne.name;
             document.getElementById('file-size').innerText = (fichierSelectionne.size / (1024 * 1024)).toFixed(2) + " MB";
 
-            const estPdf = fichierSelectionne.name.endsWith('.pdf');
+            const estPdf = fichierSelectionne.name.toLowerCase().endsWith('.pdf');
             document.getElementById('file-icon').className = estPdf ? "fa-solid fa-file-pdf" : "fa-solid fa-file-word";
             document.getElementById('file-icon').style.color = estPdf ? "#ef4444" : "#2563eb";
 
@@ -555,8 +581,9 @@
             document.getElementById('drop-zone').style.display = 'block';
         }
 
+        // --- 3. SOUMISSION SÉCURISÉE DU DOCUMENT ---
         async function soumettreDocument() {
-            const titre = document.getElementById('doc-title').value;
+            const titre = document.getElementById('doc-title').value.trim();
 
             if (!titre || !fichierSelectionne) {
                 alert("Veuillez saisir un titre et joindre un fichier.");
@@ -569,26 +596,24 @@
 
             try {
                 const formData = new FormData();
-                formData.append("utilisateur_id", UTILISATEUR_ID);
                 formData.append("titre", titre);
                 formData.append("fichier", fichierSelectionne);
+                // NOTE : On n'envoie PLUS "utilisateur_id". Le serveur le prend dans le JWT.
 
-                const reponseDepot = await fetch(`${API_URL}/documents/`, {
+                // 1. Dépôt du document
+                const docCree = await appelAPI("/documents/", {
                     method: "POST",
-                    body: formData,
+                    body: formData
                 });
-
-                if (!reponseDepot.ok) throw new Error("Erreur lors de l'envoi.");
-                const docCree = await reponseDepot.json();
 
                 bouton.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Analyse en cours...`;
 
-                const reponseAnalyse = await fetch(`${API_URL}/analyses/${docCree.id}`, { method: "POST" });
-                if (!reponseAnalyse.ok) throw new Error("Analyse impossible.");
+                // 2. Lancement de l'analyse
+                const resultat = await appelAPI(`/analyses/${docCree.id}`, { 
+                    method: "POST" 
+                });
 
-                const resultat = await reponseAnalyse.json();
-
-                alert(`Analyse effectuée avec succès. Score : ${resultat.score_global}%`);
+                alert(`Analyse effectuée avec succès. Score de similarité : ${resultat.score_global}%`);
 
                 document.getElementById('doc-title').value = '';
                 annulerFichier();
@@ -602,16 +627,17 @@
             }
         }
 
+        // --- 4. CHARGEMENT DE L'HISTORIQUE ---
         async function chargerHistorique() {
             try {
-                const res = await fetch(`${API_URL}/analyses/etudiant/${UTILISATEUR_ID}`);
-                if (!res.ok) throw new Error();
-
-                const analyses = await res.json();
+                const utilisateur = Auth.obtenirUtilisateur();
+                // On demande l'historique de l'utilisateur connecté
+                const analyses = await appelAPI(`/analyses/etudiant/${utilisateur.id}`);
+                
                 afficherHistorique(analyses);
                 mettreAJourMetriques(analyses);
 
-            } catch {
+            } catch (err) {
                 document.getElementById('history-rows').innerHTML = 
                     '<tr><td colspan="5" style="text-align:center; color: var(--text-muted);">Erreur de chargement des données.</td></tr>';
             }
@@ -633,14 +659,18 @@
                 else if (score > 10) classeBadge = 'score-mid';
 
                 const date = new Date(item.date_analyse).toLocaleDateString('fr-FR');
+                const statutTexte = item.statut === 'terminee' ? 'Analysé' : (item.statut === 'en_cours' ? 'En cours...' : 'Échoué');
+                const couleurStatut = item.statut === 'terminee' ? 'var(--dark-green)' : (item.statut === 'en_cours' ? '#d97706' : '#b91c1c');
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td style="font-weight: 700;">${item.titre_document}</td>
                     <td style="color: var(--text-muted);">${date}</td>
                     <td><span class="badge-score ${classeBadge}">${score}%</span></td>
-                    <td style="color: var(--dark-green); font-weight: 600;">Analysé</td>
-                    <td style="text-align: right;"><button class="btn-icon"><i class="fa-solid fa-download"></i></button></td>
+                    <td style="color: ${couleurStatut}; font-weight: 600;">${statutTexte}</td>
+                    <td style="text-align: right;">
+                        ${item.statut === 'terminee' ? `<button class="btn-icon" onclick="telechargerRapport(${item.analyse_id})" title="Télécharger le rapport PDF"><i class="fa-solid fa-download"></i></button>` : ''}
+                    </td>
                 `;
                 container.appendChild(tr);
             });
@@ -656,6 +686,34 @@
                 
                 const terminees = analyses.filter(a => a.statut === 'terminee').length;
                 document.getElementById('stat-terminees').innerText = terminees;
+            }
+        }
+
+        // --- 5. TÉLÉCHARGEMENT SÉCURISÉ DU RAPPORT PDF ---
+        async function telechargerRapport(analyse_id) {
+            try {
+                // 1. Demander au serveur de générer/récupérer le rapport
+                const rapportData = await appelAPI(`/rapports/${analyse_id}`, { method: 'POST' });
+                
+                // 2. Télécharger le fichier binaire avec le jeton JWT
+                const reponse = await fetch(`http://127.0.0.1:8000${rapportData.url_telechargement}`, {
+                    headers: { "Authorization": `Bearer ${Auth.obtenirJeton()}` }
+                });
+
+                if (!reponse.ok) throw new Error("Échec du téléchargement");
+
+                const blob = await reponse.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `rapport_plagicheck_${analyse_id}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+
+            } catch (err) {
+                alert(`Erreur lors du téléchargement : ${err.message}`);
             }
         }
     </script>

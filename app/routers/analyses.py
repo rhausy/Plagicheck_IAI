@@ -1,40 +1,81 @@
 """
-Route de déclenchement d'une analyse (CU3) : relie le document soumis
-à l'orchestrateur (extraction, découpage, prétraitement, similarité),
-puis enregistre les résultats en base de données.
+Routes de gestion des analyses de similarité.
+Sécurité :
+- Authentification obligatoire pour toutes les routes.
+- Contrôle de propriété strict (un étudiant ne voit/analyse que ses documents).
+- Limitation de débit pour protéger le CPU (l'analyse est coûteuse).
+- Messages d'erreur génériques pour éviter les fuites d'informations internes.
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+import logging
+
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session as SessionBDD
 
+from app.config import SEUIL_ALERTE_DEFAUT
 from app.database import obtenir_session
-from app.models import Document, Analyse, Correspondance
+from app.models import (
+    Analyse, Correspondance, Document, 
+    ROLE_ENCADRANT, ROLE_ADMINISTRATEUR, ROLE_ETUDIANT, STATUT_ANALYSE_TERMINEE
+)
 from app.schemas import AnalyseReponse, AnalyseDetailReponse, AnalyseHistoriqueReponse
+from app.securite import (
+    obtenir_utilisateur_courant, limiter_action
+)
 from app.services.analyse import OrchestrateurAnalyse
 from app.services.extraction import ErreurExtractionTexte
 
 router = APIRouter(prefix="/analyses", tags=["Analyses"])
 orchestrateur = OrchestrateurAnalyse()
+logger = logging.getLogger("plagicheck.analyses")
+
+
+def _verifier_propriete_document(utilisateur, document: Document):
+    """Vérifie que l'utilisateur a le droit d'analyser ce document."""
+    if utilisateur.role == ROLE_ETUDIANT:
+        if document.utilisateur_id != utilisateur.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Vous n'avez pas accès à ce document."
+            )
+    # Les encadrants et administrateurs peuvent analyser n'importe quel document étudiant
 
 
 @router.post("/{document_id}", response_model=AnalyseReponse)
-def lancer_analyse(document_id: int, session: SessionBDD = Depends(obtenir_session)):
+def lancer_analyse(
+    document_id: int,
+    request: Request,
+    session: SessionBDD = Depends(obtenir_session),
+    utilisateur = Depends(obtenir_utilisateur_courant),
+):
+    # Protection contre le DoS : max 3 analyses par minute par utilisateur
+    limiter_action("analyse_lancement", limite=3, fenetre=60)(utilisateur)
 
     document = session.query(Document).filter(Document.id == document_id).first()
-
-    document_gabarit = (
-        session.query(Document)
-        .filter(Document.type_document == "gabarit")
-        .order_by(Document.date_upload.desc())
-        .first()
-    )
-    if document_gabarit:
-        texte_gabarit = orchestrateur.extracteur.extraire(document_gabarit.chemin_fichier)
-        orchestrateur.neutraliseur.charger_gabarit(texte_gabarit)
-
     if not document:
-        raise HTTPException(status_code=404, detail="Document introuvable.")
-        
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document introuvable.")
+
+    if document.type_document != "soumission":
+        raise HTTPException(status_code=400, detail="Seuls les documents de type 'soumission' peuvent être analysés.")
+
+    # Vérification de propriété
+    _verifier_propriete_document(utilisateur, document)
+
+    # Chargement du gabarit (tolérant aux erreurs pour ne pas bloquer l'analyse)
+    try:
+        document_gabarit = (
+            session.query(Document)
+            .filter(Document.type_document == "gabarit")
+            .order_by(Document.date_upload.desc())
+            .first()
+        )
+        if document_gabarit:
+            texte_gabarit = orchestrateur.extracteur.extraire(document_gabarit.chemin_fichier)
+            orchestrateur.neutraliseur.charger_gabarit(texte_gabarit)
+    except Exception as e:
+        logger.warning(f"Erreur lors du chargement du gabarit : {e}")
+
+    # Récupération des documents de comparaison
     documents_reference = [
         {"id": doc.id, "chemin": doc.chemin_fichier}
         for doc in session.query(Document).filter(Document.type_document == "reference").all()
@@ -42,25 +83,43 @@ def lancer_analyse(document_id: int, session: SessionBDD = Depends(obtenir_sessi
 
     documents_meme_etudiant = [
         {"id": doc.id, "chemin": doc.chemin_fichier}
-        for doc in session.query(Document)
-        .filter(Document.utilisateur_id == document.utilisateur_id, Document.id != document.id)
-        .all()
+        for doc in session.query(Document).filter(
+            Document.utilisateur_id == document.utilisateur_id, 
+            Document.id != document.id
+        ).all()
     ]
 
-    analyse = Analyse(document_id=document.id, statut="en_cours")
+    # Création de l'entrée d'analyse
+    analyse = Analyse(
+        document_id=document.id, 
+        statut="en_cours",
+        seuil_utilise=SEUIL_ALERTE_DEFAUT,
+        declenche_par_id=utilisateur.id
+    )
     session.add(analyse)
     session.commit()
     session.refresh(analyse)
 
+    # Exécution de l'orchestrateur
     try:
         resultat = orchestrateur.analyser(
             document.chemin_fichier, documents_reference, documents_meme_etudiant
         )
-    except ErreurExtractionTexte as erreur:
+    except ErreurExtractionTexte:
+        # On ne renvoie pas le détail technique au client (fuite d'info)
         analyse.statut = "echouee"
+        analyse.message_erreur = "Erreur d'extraction"
         session.commit()
-        raise HTTPException(status_code=422, detail=str(erreur))
+        logger.error(f"Erreur d'extraction pour le document {document_id} par l'utilisateur {utilisateur.id}")
+        raise HTTPException(status_code=422, detail="Le document ne peut pas être analysé (format illisible).")
+    except Exception as e:
+        analyse.statut = "echouee"
+        analyse.message_erreur = "Erreur interne"
+        session.commit()
+        logger.error(f"Erreur inattendue lors de l'analyse {document_id} : {e}")
+        raise HTTPException(status_code=500, detail="Erreur interne lors de l'analyse.")
 
+    # Enregistrement des correspondances
     for nom_section, donnees_section in resultat["sections"].items():
         for correspondance in donnees_section["correspondances"]:
             session.add(Correspondance(
@@ -74,7 +133,7 @@ def lancer_analyse(document_id: int, session: SessionBDD = Depends(obtenir_sessi
             ))
 
     analyse.score_global = resultat["score_global"]
-    analyse.statut = "terminee"
+    analyse.statut = STATUT_ANALYSE_TERMINEE
     session.commit()
 
     return {
@@ -85,11 +144,17 @@ def lancer_analyse(document_id: int, session: SessionBDD = Depends(obtenir_sessi
 
 
 @router.get("/{analyse_id}", response_model=AnalyseDetailReponse)
-def consulter_analyse(analyse_id: int, session: SessionBDD = Depends(obtenir_session)):
-
+def consulter_analyse(
+    analyse_id: int,
+    session: SessionBDD = Depends(obtenir_session),
+    utilisateur = Depends(obtenir_utilisateur_courant),
+):
     analyse = session.query(Analyse).filter(Analyse.id == analyse_id).first()
     if not analyse:
-        raise HTTPException(status_code=404, detail="Analyse introuvable.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Analyse introuvable.")
+
+    # Vérification de propriété sur le document lié à l'analyse
+    _verifier_propriete_document(utilisateur, analyse.document)
 
     correspondances = (
         session.query(Correspondance)
@@ -106,7 +171,19 @@ def consulter_analyse(analyse_id: int, session: SessionBDD = Depends(obtenir_ses
 
 
 @router.get("/etudiant/{utilisateur_id}", response_model=list[AnalyseHistoriqueReponse])
-def lister_analyses_etudiant(utilisateur_id: int, session: SessionBDD = Depends(obtenir_session)):
+def lister_analyses_etudiant(
+    utilisateur_id: int,
+    session: SessionBDD = Depends(obtenir_session),
+    utilisateur = Depends(obtenir_utilisateur_courant),
+):
+    # Un étudiant ne peut voir que son propre historique
+    if utilisateur.role == ROLE_ETUDIANT and utilisateur.id != utilisateur_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Accès refusé : vous ne pouvez consulter que votre propre historique."
+        )
+    # Les encadrants et admins peuvent voir l'historique de n'importe quel étudiant
+
     analyses = (
         session.query(Analyse)
         .join(Document)

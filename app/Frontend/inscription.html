@@ -64,7 +64,7 @@
     background: linear-gradient(135deg, rgba(255,255,255,0.4), var(--vert), var(--bleu), rgba(255,255,255,0.2));
     background-size: 200% 200%;
     animation: degrade 6s ease infinite, apparaitre 0.6s ease both;
-    max-height: calc(100vh - 3rem); /* Empêche de toucher le haut/bas */
+    max-height: calc(100vh - 3rem);
     display: flex;
   }
 
@@ -138,10 +138,36 @@
     transform: translateY(-2px); 
     box-shadow: 0 10px 20px -5px rgba(59,130,246,0.5); 
   }
+  button.principal:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
 
   .bas { text-align: center; font-size: 0.78rem; color: #CBD5E1; margin-top: 1rem; }
   .bas a { color: #38BDF8; font-weight: 600; text-decoration: none; }
   .bas a:hover { text-decoration: underline; }
+
+  /* Message d'info sur le rôle forcé */
+  .info-role {
+    background: rgba(56, 189, 248, 0.1);
+    border-left: 3px solid #38BDF8;
+    padding: 0.5rem 0.7rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    color: #CBD5E1;
+    margin: 0.5rem 0 1rem;
+  }
+
+  /* Indicateur de force du mot de passe */
+  .indicateur-mdp {
+    font-size: 0.7rem;
+    color: #94A3B8;
+    margin-top: 0.3rem;
+    min-height: 1rem;
+  }
+  .indicateur-mdp.erreur { color: #F87171; }
+  .indicateur-mdp.succes { color: #4ADE80; }
 </style>
 </head>
 <body>
@@ -157,7 +183,7 @@
     <form id="formulaireInscription">
       <label for="nomComplet">Nom complet</label>
       <div class="champ">
-        <input type="text" id="nomComplet" name="nomComplet" placeholder="Ex: Jean Dupont" required>
+        <input type="text" id="nomComplet" name="nomComplet" placeholder="Ex: Jean Dupont" required minlength="2" maxlength="100">
       </div>
 
       <label for="email">Adresse email académique</label>
@@ -165,50 +191,121 @@
         <input type="email" id="email" name="email" placeholder="vous@iai-cameroun.com" required>
       </div>
 
-      <label for="role">Profil / Rôle</label>
-      <div class="champ">
-        <select id="role" name="role" required>
-          <option value="etudiant">Étudiant (Consultation uniquement)</option>
-          <option value="enseignant">Enseignant / Encadrant</option>
-          <option value="admin">Administrateur</option>
-        </select>
+      <!-- Info : le rôle est forcé côté serveur pour des raisons de sécurité -->
+      <div class="info-role">
+        ℹ️ L'inscription crée un compte <strong>étudiant</strong>. Les comptes encadrant et administrateur sont créés par l'administration.
       </div>
 
       <div class="ligne-double">
         <div>
           <label for="motDePasse">Mot de passe</label>
           <div class="champ">
-            <input type="password" id="motDePasse" name="motDePasse" placeholder="••••••••" required>
+            <input type="password" id="motDePasse" name="motDePasse" placeholder="••••••••" required minlength="12">
           </div>
+          <div class="indicateur-mdp" id="indicateurMdp"></div>
         </div>
         <div>
           <label for="confirmMotDePasse">Confirmation</label>
           <div class="champ">
-            <input type="password" id="confirmMotDePasse" name="confirmMotDePasse" placeholder="••••••••" required>
+            <input type="password" id="confirmMotDePasse" name="confirmMotDePasse" placeholder="••••••••" required minlength="12">
           </div>
         </div>
       </div>
 
-      <button type="submit" class="principal">S'inscrire</button>
+      <button type="submit" class="principal" id="boutonInscription">S'inscrire</button>
     </form>
 
     <p class="bas">Déjà inscrit ? <a href="connexion.html">Se connecter</a></p>
   </div>
 </div>
 
-<script>
-  document.getElementById("formulaireInscription").addEventListener("submit", function (e) {
-    e.preventDefault();
-    const mdp = document.getElementById("motDePasse").value;
-    const confirmMdp = document.getElementById("confirmMotDePasse").value;
+<!-- Chargement du module API sécurisé -->
+<script src="js/api.js"></script>
 
-    if (mdp !== confirmMdp) {
-      alert("Les mots de passe ne correspondent pas.");
-      return;
-    }
-    
+<script>
+/* ==========================================================
+   VALIDATION DU MOT DE PASSE EN TEMPS RÉEL
+   ========================================================== */
+const champMdp = document.getElementById("motDePasse");
+const indicateur = document.getElementById("indicateurMdp");
+
+champMdp.addEventListener("input", function () {
+  const valeur = this.value;
+  const regles = [
+    { test: valeur.length >= 12, texte: "12 caractères minimum" },
+    { test: /[A-Z]/.test(valeur), texte: "1 majuscule" },
+    { test: /[0-9]/.test(valeur), texte: "1 chiffre" },
+    { test: /[^A-Za-z0-9]/.test(valeur), texte: "1 caractère spécial" }
+  ];
+
+  const nonRespectees = regles.filter(r => !r.test).map(r => r.texte);
+
+  if (valeur.length === 0) {
+    indicateur.textContent = "";
+    indicateur.className = "indicateur-mdp";
+  } else if (nonRespectees.length === 0) {
+    indicateur.textContent = "✓ Mot de passe valide";
+    indicateur.className = "indicateur-mdp succes";
+  } else {
+    indicateur.textContent = "Manque : " + nonRespectees.join(", ");
+    indicateur.className = "indicateur-mdp erreur";
+  }
+});
+
+
+/* ==========================================================
+   GESTION DE L'INSCRIPTION
+   ========================================================== */
+document.getElementById("formulaireInscription").addEventListener("submit", async function (e) {
+  e.preventDefault();
+
+  const nom = document.getElementById("nomComplet").value.trim();
+  const email = document.getElementById("email").value.trim().toLowerCase();
+  const motDePasse = document.getElementById("motDePasse").value;
+  const confirmMdp = document.getElementById("confirmMotDePasse").value;
+  const bouton = document.getElementById("boutonInscription");
+
+  // Validation côté client (évite un aller-retour serveur inutile)
+  if (motDePasse !== confirmMdp) {
+    alert("Les mots de passe ne correspondent pas.");
+    return;
+  }
+
+  if (motDePasse.length < 12) {
+    alert("Le mot de passe doit contenir au moins 12 caractères.");
+    return;
+  }
+  if (!/[A-Z]/.test(motDePasse)) {
+    alert("Le mot de passe doit contenir au moins une majuscule.");
+    return;
+  }
+  if (!/[0-9]/.test(motDePasse)) {
+    alert("Le mot de passe doit contenir au moins un chiffre.");
+    return;
+  }
+  if (!/[^A-Za-z0-9]/.test(motDePasse)) {
+    alert("Le mot de passe doit contenir au moins un caractère spécial (ex: !@#$%).");
+    return;
+  }
+
+  // État de chargement
+  bouton.disabled = true;
+  bouton.textContent = "Inscription en cours...";
+
+  try {
+    // Appel à la fonction sécurisée de api.js (le rôle "etudiant" est forcé côté serveur)
+    await sInscrire(nom, email, motDePasse);
+
+    alert("Compte créé avec succès ! Vous pouvez maintenant vous connecter.");
     window.location.href = "connexion.html";
-  });
+
+  } catch (erreur) {
+    alert(erreur.message || "Erreur lors de l'inscription.");
+  } finally {
+    bouton.disabled = false;
+    bouton.textContent = "S'inscrire";
+  }
+});
 </script>
 </body>
 </html>

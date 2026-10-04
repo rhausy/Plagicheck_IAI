@@ -16,7 +16,6 @@
     overflow: hidden; position: relative;
   }
 
-  /* Image de fond nette et lumineuse, juste légèrement reculée (zoom arrière) */
   body::before {
     content: ""; position: fixed; inset: -150px;
     background: url('images/ia-analyse.png') center/cover no-repeat;
@@ -24,7 +23,6 @@
     z-index: -1;
   }
 
-  /* Bordure dégradée animée qui dessine le contour de la carte */
   .carte-enveloppe {
     position: relative; z-index: 1; padding: 1.5px; border-radius: 22px;
     background: linear-gradient(120deg, var(--vert), var(--bleu), var(--vert));
@@ -34,7 +32,6 @@
   @keyframes degrade { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
   @keyframes apparaitre { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
 
-  /* La carte : très transparente, juste un fin contour, on voit le fond net à travers */
   .carte {
     width: min(370px, 90vw); padding: 2.2rem 2rem; border-radius: 20px;
     background: rgba(255,255,255,0.05);
@@ -128,47 +125,52 @@
   </div>
 </div>
 
+<script src="js/api.js"></script>
+
 <script>
- document.getElementById("formulaireConnexion").addEventListener("submit", async function (e) {
+/* ==========================================================
+   GESTION DE LA CONNEXION (Corrige les redirections de rôles)
+   ========================================================== */
+document.getElementById("formulaireConnexion").addEventListener("submit", async function (e) {
   e.preventDefault();
 
-  const email = document.getElementById("email").value;
+  const email = document.getElementById("email").value.trim();
   const motDePasse = document.getElementById("motDePasse").value;
+  const bouton = this.querySelector("button.principal");
+
+  bouton.disabled = true;
+  bouton.textContent = "Connexion en cours...";
 
   try {
-    const reponse = await fetch("http://127.0.0.1:8000/auth/connexion", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: email, mot_de_passe: motDePasse }),
-    });
+    const utilisateur = await seConnecter(email, motDePasse);
 
-    if (!reponse.ok) {
-      const erreur = await reponse.json();
-      alert(erreur.detail || "Email ou mot de passe incorrect.");
-      return;
-    }
+    // Récupérer le rôle (normalisé en majuscules pour éviter les erreurs de casse)
+    const roleBrut = utilisateur?.role || sessionStorage.getItem("user_role") || "";
+    const role = roleBrut.toUpperCase();
 
-    const donnees = await reponse.json();
-
-    localStorage.setItem("utilisateur_id", donnees.utilisateur.id);
-    localStorage.setItem("nom_utilisateur", donnees.utilisateur.nom);
-    localStorage.setItem("role", donnees.utilisateur.role);
-    localStorage.setItem("jeton_acces", donnees.jeton_acces);
-
-    if (donnees.utilisateur.role === "etudiant") {
-      window.location.href = "etudiant.html";
-    } else if (donnees.utilisateur.role === "encadrant") {
-      window.location.href = "enseignant.html";
-    } else if (donnees.utilisateur.role === "administrateur") {
+    // Redirection selon le rôle (gestion des déclinaisons Fr/En/Majuscules)
+    if (role === "ADMIN" || role === "ADMINISTRATEUR") {
       window.location.href = "admin.html";
+    } else if (role === "ENSEIGNANT" || role === "ENCADRANT" || role === "TEACHER") {
+      window.location.href = "enseignant.html";
+    } else if (role === "ETUDIANT" || role === "STUDENT") {
+      window.location.href = "etudiant.html";
+    } else {
+      alert(`Rôle inconnu (${roleBrut}). Contactez l'administrateur.`);
     }
 
   } catch (erreur) {
-    alert("Impossible de contacter le serveur.");
-    console.error(erreur);
+    console.error("Erreur de connexion :", erreur);
+    alert(erreur.message || "Email ou mot de passe incorrect.");
+  } finally {
+    bouton.disabled = false;
+    bouton.textContent = "Se connecter";
   }
 });
 
+/* ==========================================================
+   AFFICHAGE / MASQUAGE DU MOT DE PASSE
+   ========================================================== */
 const champMotDePasse = document.getElementById("motDePasse");
 const iconeOeil = document.getElementById("iconeOeil");
 
@@ -179,7 +181,7 @@ iconeOeil.addEventListener("click", function () {
   iconeOeil.innerHTML = estMasque
     ? `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.9 10.9 0 0 1 12 19c-7 0-11-7-11-7a18.6 18.6 0 0 1 5.06-5.94M9.9 4.24A10.9 10.9 0 0 1 12 4c7 0 11 7 11 7a18.6 18.6 0 0 1-2.16 3.19M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`
     : `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>`;
-}); 
+});
 </script>
 </body>
 </html>

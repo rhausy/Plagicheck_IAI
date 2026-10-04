@@ -1,6 +1,60 @@
+# --- SECRETS ET CONFIGURATION SENSIBLE ---
+.env
+.env.local
+.env.production
+
+# --- BASE DE DONNÉES ET DONNÉES UTILISATEUR ---
+# On ignore tout le dossier data/ car il contient les PDF des étudiants, 
+# les rapports générés, les journaux et la base SQLite.
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# --- PYTHON ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# --- ENVIRONNEMENTS VIRTUELS ---
 venv/
 .venv/
-__pycache__/
-*.pyc
-.env
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# --- IDE ET ÉDITEURS ---
 .vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# --- TESTS ET COUVERTURE ---
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# --- JOURNAUX ---
+*.log
