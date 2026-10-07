@@ -160,6 +160,12 @@ class Utilisateur(Base):
         cascade="all, delete-orphan",
     )
 
+    notifications = relationship(
+        "Notification",
+        back_populates="utilisateur",
+        cascade="all, delete-orphan",
+    )
+
 
 class Etudiant(Base):
     """Informations complémentaires d'un utilisateur étudiant."""
@@ -622,3 +628,39 @@ class JournalAudit(Base):
 
     # Données non sensibles uniquement, par exemple JSON sérialisé.
     details = Column(Text, nullable=True)
+
+
+class Notification(Base):
+    """
+    Notifications envoyées aux utilisateurs.
+    Peut être liée à une analyse, un document, ou être globale.
+    """
+
+    __tablename__ = "notifications"
+
+    __table_args__ = (
+        Index("ix_notifications_utilisateur_lue", "utilisateur_id", "est_lue"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    utilisateur_id = Column(
+        Integer,
+        ForeignKey("utilisateurs.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    titre = Column(String(200), nullable=False)
+    message = Column(Text, nullable=False)
+    type = Column(String(20), nullable=False, default="info")  # info, success, warning, error
+
+    # Lien optionnel vers l'objet concerné (ex: /analyses/12)
+    lien = Column(String(500), nullable=True)
+
+    est_lue = Column(Boolean, nullable=False, default=False)
+
+    date_creation = Column(DateTime, nullable=False, default=maintenant_utc, index=True)
+
+    # Relation vers l'utilisateur
+    utilisateur = relationship("Utilisateur", back_populates="notifications")

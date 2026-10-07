@@ -26,6 +26,7 @@ from app.securite import (
 )
 from app.services.analyse import OrchestrateurAnalyse
 from app.services.extraction import ErreurExtractionTexte
+from app.routers.notifications import creer_notification
 
 router = APIRouter(prefix="/analyses", tags=["Analyses"])
 orchestrateur = OrchestrateurAnalyse()
@@ -145,9 +146,27 @@ async def lancer_analyse(
                 type_comparaison=correspondance["type_comparaison"],
             ))
 
-    analyse.score_global = resultat["score_global"]
+        analyse.score_global = resultat["score_global"]
     analyse.statut = STATUT_ANALYSE_TERMINEE
     session.commit()
+
+    # Création de la notification pour l'étudiant
+    score = resultat["score_global"]
+    if score >= 50:
+        type_notif = "warning"
+        message = f"Score de similarité élevé ({score}%) détecté dans votre document."
+    else:
+        type_notif = "success"
+        message = f"Analyse terminée avec un score de {score}%."
+
+    creer_notification(
+        session,
+        utilisateur_id_document,
+        titre="Analyse terminée",
+        message=message,
+        type_notif=type_notif,
+        lien=f"/analyses/{analyse_id}"
+    )
 
     return {
         "analyse_id": analyse.id,

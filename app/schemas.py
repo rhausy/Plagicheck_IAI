@@ -181,3 +181,21 @@ class AnalyseHistoriqueReponse(BaseModel):
     score_global: Optional[float]
     statut: str
     date_analyse: datetime
+
+    # =====================================================================
+# NOTIFICATIONS
+# =====================================================================
+
+class NotificationReponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    titre: str
+    message: str
+    type: str
+    lien: str | None = None
+    est_lue: bool
+    date_creation: datetime
+
+
+class NotificationCompteur(BaseModel):
+    non_lues: int

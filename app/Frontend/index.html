@@ -4,57 +4,67 @@
 <head>
 
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlagiCheck | Détection intelligente de plagiat académique</title>
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    <!-- SEO & Partage -->
+    <meta name="description" content="PlagiCheck analyse vos rapports académiques par section et détecte les similitudes lexicales et sémantiques grâce à l'intelligence artificielle.">
+    <meta property="og:title" content="PlagiCheck — Intégrité académique">
+    <meta property="og:description" content="Plateforme de détection de similarité pour les rapports de fin d'études.">
+    <meta property="og:image" content="Images/logo.png">
+    <link rel="icon" href="Images/logo.png" type="image/png">
 
-    <title>PlagiCheck | Détection de similarité académique</title>
-
-
-    <!-- =====================================================
-         POLICE
-         ===================================================== -->
-
-    <link rel="preconnect"
-          href="https://fonts.googleapis.com">
-
-    <link rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossorigin>
-
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap"
-          rel="stylesheet">
-
+    <!-- Polices & Icônes -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <style>
 
         /* =====================================================
-           1. COULEURS PRINCIPALES
+           VARIABLES & RESET
            ===================================================== */
 
         :root {
+            /* Palette principale */
+            --green: #0E9F6E;
+            --green-dark: #057A55;
+            --green-light: #ECFDF5;
+            --green-glow: rgba(14, 159, 110, 0.15);
 
-            --green: #129447;
-            --green-dark: #087638;
-            --green-light: #eaf8f0;
+            --sky: #0EA5E9;
+            --sky-dark: #0284C7;
+            --sky-light: #F0F9FF;
+            --sky-glow: rgba(14, 165, 233, 0.15);
 
-            --sky: #1598df;
-            --sky-light: #eaf6fd;
-
-            --navy: #101c35;
-            --black: #111827;
+            --navy: #0F172A;
+            --navy-light: #1E293B;
+            --slate: #64748B;
+            --slate-light: #94A3B8;
 
             --white: #ffffff;
-            --background: #f8fafc;
+            --bg-soft: #F8FAFC;
+            --bg-dark: #0B1220;
 
-            --border: #dce7ef;
-            --text-soft: #66758a;
+            --border: #E2E8F0;
+            --border-soft: #F1F5F9;
+
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -4px rgba(0,0,0,0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.01);
+            --shadow-glow: 0 0 40px -10px var(--green-glow);
+
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            --radius-2xl: 32px;
+
+            --font-display: 'Montserrat', sans-serif;
+            --font-body: 'Inter', sans-serif;
         }
-
-
-        /* =====================================================
-           2. RESET
-           ===================================================== */
 
         * {
             margin: 0;
@@ -62,2560 +72,1684 @@
             box-sizing: border-box;
         }
 
-
         html {
             scroll-behavior: smooth;
+            scroll-padding-top: 80px;
         }
-
 
         body {
-
-            font-family: "Montserrat", sans-serif;
-
+            font-family: var(--font-body);
             background: var(--white);
-
             color: var(--navy);
-
-            font-weight: 600;
-
-            line-height: 1.5;
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
 
-
-        a {
-            text-decoration: none;
-            color: inherit;
-        }
-
-
-        img {
-            display: block;
-            max-width: 100%;
-        }
-
+        a { text-decoration: none; color: inherit; }
+        img { display: block; max-width: 100%; height: auto; }
+        ul { list-style: none; }
 
         /* =====================================================
-           3. NAVIGATION
+           COMPOSANTS RÉUTILISABLES
            ===================================================== */
 
-        .navbar {
-
-            position: sticky;
-
-            top: 0;
-
-            z-index: 1000;
-
-            background: rgba(255,255,255,0.97);
-
-            border-bottom: 1px solid var(--border);
-
-            backdrop-filter: blur(10px);
-        }
-
-
-        .nav-container {
-
+        .container {
             width: 92%;
-
-            max-width: 1400px;
-
-            min-height: 76px;
-
-            margin: auto;
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: space-between;
-
-            gap: 25px;
+            max-width: 1280px;
+            margin: 0 auto;
         }
 
-
-        /* LOGO */
-
-        .brand {
-
-            display: flex;
-
+        .tag {
+            display: inline-flex;
             align-items: center;
+            gap: 6px;
+            font-family: var(--font-display);
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--sky);
+            margin-bottom: 1rem;
+        }
 
+        .tag::before {
+            content: "";
+            width: 24px;
+            height: 2px;
+            background: var(--sky);
+            border-radius: 2px;
+        }
+
+        .tag.green { color: var(--green); }
+        .tag.green::before { background: var(--green); }
+
+        h1, h2, h3 {
+            font-family: var(--font-display);
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+        }
+
+        .section-title {
+            font-size: clamp(1.75rem, 3vw, 2.5rem);
+            margin-bottom: 1rem;
+        }
+
+        .section-subtitle {
+            color: var(--slate);
+            font-size: 1.05rem;
+            max-width: 560px;
+            line-height: 1.6;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             gap: 10px;
-
-            font-size: 30px;
-
-            font-weight: 800;
-
-            white-space: nowrap;
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 0.95rem;
+            padding: 14px 28px;
+            border-radius: var(--radius-md);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
         }
 
-
-        .brand img {
-
-            width: 55px;
-
-            height: 55px;
-
-            object-fit: contain;
-        }
-
-
-        .brand span span {
-
-            color: var(--sky);
-        }
-
-
-        /* MENU */
-
-        nav {
-
-            display: flex;
-
-            align-items: center;
-
-            gap: 32px;
-        }
-
-
-        nav a {
-
-            font-size: 14px;
-
-            font-weight: 800;
-
-            transition: 0.25s;
-        }
-
-
-        nav a:hover {
-
-            color: var(--sky);
-        }
-
-
-        /* BOUTONS NAVIGATION */
-
-        .nav-buttons {
-
-            display: flex;
-
-            align-items: center;
-
-            gap: 18px;
-        }
-
-
-        .login {
-
-            font-size: 14px;
-
-            font-weight: 800;
-        }
-
-
-        .login:hover {
-
-            color: var(--sky);
-        }
-
-
-        .deposit {
-
+        .btn-primary {
             background: var(--green);
-
             color: white;
-
-            padding: 13px 20px;
-
-            border-radius: 10px;
-
-            font-size: 13px;
-
-            font-weight: 800;
-
-            transition: 0.25s;
+            box-shadow: 0 4px 14px rgba(14, 159, 110, 0.25);
         }
 
-
-        .deposit:hover {
-
+        .btn-primary:hover {
             background: var(--green-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(14, 159, 110, 0.35);
+        }
 
+        .btn-outline {
+            background: transparent;
+            color: var(--navy);
+            border: 2px solid var(--border);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--navy);
+            background: var(--navy);
+            color: white;
+        }
+
+        .btn-glass {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .btn-glass:hover {
+            background: rgba(255,255,255,0.2);
             transform: translateY(-2px);
         }
 
-
         /* =====================================================
-           4. HERO
+           NAVIGATION
            ===================================================== */
 
-           .hero {
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid transparent;
+            transition: all 0.3s ease;
+        }
 
-background:
+        .navbar.scrolled {
+            border-bottom-color: var(--border);
+            box-shadow: var(--shadow-sm);
+        }
 
-    linear-gradient(
-        120deg,
-        rgba(255,255,255,0.60) 0%,
-        rgba(244,251,255,0.60) 55%,
-        rgba(239,250,244,0.60) 100%
-    ),
-    url("Images/ia.backend.avif") center/cover no-repeat;
-
-padding: 48px 0 55px;
-
-overflow: hidden;
-}
-
-
-        .hero-container {
-
-            width: 92%;
-
-            max-width: 1400px;
-
-            margin: auto;
-
-            display: grid;
-
-            grid-template-columns: 1fr 0.9fr;
-
-            gap: 55px;
-
+        .nav-container {
+            height: 72px;
+            display: flex;
             align-items: center;
+            justify-content: space-between;
+            gap: 2rem;
         }
 
-
-        /* TEXTE HERO */
-
-        .hero-label {
-
-            display: inline-flex;
-
+        .brand {
+            display: flex;
             align-items: center;
-
-            gap: 8px;
-
-            padding: 7px 13px;
-
-            background: var(--green-light);
-
-            color: var(--green);
-
-            border-radius: 30px;
-
-            font-size: 11px;
-
-            font-weight: 800;
-
-            margin-bottom: 18px;
+            gap: 12px;
+            font-family: var(--font-display);
+            font-size: 1.4rem;
+            font-weight: 900;
+            letter-spacing: -0.03em;
         }
 
-
-        .hero-label::before {
-
-            content: "";
-
-            width: 7px;
-
-            height: 7px;
-
-            background: var(--green);
-
-            border-radius: 50%;
+        .brand img {
+            width: 42px;
+            height: 42px;
+            object-fit: contain;
         }
 
+        .brand span { color: var(--sky); }
 
-        .hero-left h1 {
-
-            font-size: clamp(38px, 4.2vw, 60px);
-
-            line-height: 1.06;
-
-            letter-spacing: -2px;
-
-            margin-bottom: 20px;
-
-            color: var(--navy);
-
-            font-weight: 800;
+        .nav-links {
+            display: flex;
+            gap: 2rem;
         }
 
-
-        .hero-left h1 span {
-
-            color: var(--sky);
-        }
-
-
-        .hero-description {
-
-            max-width: 620px;
-
-            color: var(--text-soft);
-
-            font-size: 15px;
-
-            margin-bottom: 24px;
-
+        .nav-links a {
+            font-family: var(--font-display);
+            font-size: 0.9rem;
             font-weight: 600;
+            color: var(--slate);
+            transition: color 0.2s;
+            position: relative;
         }
 
+        .nav-links a::after {
+            content: "";
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--sky);
+            transition: width 0.3s;
+        }
 
-        /* BOUTON HERO */
+        .nav-links a:hover { color: var(--navy); }
+        .nav-links a:hover::after { width: 100%; }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .nav-link {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--navy);
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover { color: var(--sky); }
+
+        .nav-cta {
+            padding: 10px 20px;
+            font-size: 0.875rem;
+        }
+
+        /* =====================================================
+           HERO
+           ===================================================== */
+
+        .hero {
+            position: relative;
+            padding: 140px 0 80px;
+            background: 
+                radial-gradient(ellipse 80% 50% at 50% -20%, var(--sky-light), transparent),
+                radial-gradient(ellipse 60% 50% at 80% 50%, var(--green-light), transparent),
+                var(--white);
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: "";
+            position: absolute;
+            top: 10%;
+            right: -5%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, var(--sky-glow), transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--green);
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .hero-badge .dot {
+            width: 8px;
+            height: 8px;
+            background: var(--green);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 4.5vw, 4rem);
+            margin-bottom: 1.5rem;
+            line-height: 1.05;
+        }
+
+        .hero h1 span {
+            background: linear-gradient(135deg, var(--sky), var(--green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-text {
+            font-size: 1.15rem;
+            color: var(--slate);
+            margin-bottom: 2rem;
+            max-width: 480px;
+            line-height: 1.7;
+        }
 
         .hero-buttons {
-
             display: flex;
-
-            align-items: center;
-
-            gap: 12px;
-
+            gap: 1rem;
             flex-wrap: wrap;
         }
 
-
-        .primary-button {
-
-            display: inline-flex;
-
-            align-items: center;
-
-            gap: 10px;
-
-            background: var(--green);
-
-            color: white;
-
-            padding: 14px 21px;
-
-            border-radius: 10px;
-
-            font-size: 13px;
-
-            font-weight: 800;
-
-            transition: 0.25s;
-        }
-
-
-        .primary-button:hover {
-
-            transform: translateY(-3px);
-
-            box-shadow:
-                0 10px 25px
-                rgba(18,148,71,0.20);
-        }
-
-
-        /* =====================================================
-           5. APERÇU RAPPORT DE SIMILARITÉ
-           ===================================================== */
-
-        .analysis-preview {
-
+        /* Mockup Dashboard */
+        .hero-visual {
             position: relative;
-
-            min-height: 380px;
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: center;
         }
 
-
-        .preview-card {
-
-            width: 100%;
-
-            max-width: 560px;
-
-            background: white;
-
+        .mockup-card {
+            background: var(--white);
+            border-radius: var(--radius-xl);
             border: 1px solid var(--border);
-
-            border-radius: 22px;
-
-            padding: 22px;
-
-            box-shadow:
-                0 20px 55px
-                rgba(16,28,53,0.09);
-
+            box-shadow: var(--shadow-xl);
+            padding: 1.5rem;
             position: relative;
-
             z-index: 2;
+            animation: float 6s ease-in-out infinite;
         }
 
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
 
-        /* EN-TÊTE */
-
-        .preview-top {
-
+        .mockup-header {
             display: flex;
-
             justify-content: space-between;
-
             align-items: center;
-
-            margin-bottom: 18px;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-soft);
         }
 
+        .mockup-title {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
 
-        .preview-title {
+        .mockup-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--green);
+            background: var(--green-light);
+            padding: 4px 10px;
+            border-radius: 100px;
+        }
 
-            font-size: 14px;
+        .mockup-body {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 1.5rem;
+            align-items: center;
+        }
 
-            font-weight: 800;
+        .mockup-chart {
+            height: 180px;
+            border-radius: var(--radius-md);
+            background: linear-gradient(135deg, var(--bg-soft), var(--white));
+            border: 1px solid var(--border-soft);
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            padding: 1rem;
+            gap: 8px;
+        }
 
+        .bar {
+            width: 100%;
+            background: linear-gradient(to top, var(--sky), var(--sky-light));
+            border-radius: 4px 4px 0 0;
+            animation: growBar 1.5s ease-out;
+            transform-origin: bottom;
+        }
+
+        .bar:nth-child(1) { height: 40%; animation-delay: 0.1s; }
+        .bar:nth-child(2) { height: 65%; animation-delay: 0.2s; }
+        .bar:nth-child(3) { height: 35%; animation-delay: 0.3s; }
+        .bar:nth-child(4) { height: 80%; animation-delay: 0.4s; }
+        .bar:nth-child(5) { height: 55%; animation-delay: 0.5s; }
+
+        @keyframes growBar {
+            from { transform: scaleY(0); }
+            to { transform: scaleY(1); }
+        }
+
+        .mockup-score {
+            text-align: center;
+        }
+
+        .score-ring {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 1rem;
+            position: relative;
+        }
+
+        .score-ring svg {
+            transform: rotate(-90deg);
+            width: 100%;
+            height: 100%;
+        }
+
+        .score-ring circle {
+            fill: none;
+            stroke-width: 8;
+            stroke-linecap: round;
+        }
+
+        .score-ring .bg { stroke: var(--border-soft); }
+        .score-ring .progress {
+            stroke: var(--green);
+            stroke-dasharray: 283;
+            stroke-dashoffset: 249;
+            animation: ringFill 1.5s ease-out forwards;
+        }
+
+        @keyframes ringFill {
+            to { stroke-dashoffset: 249; }
+        }
+
+        .score-value {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: var(--font-display);
+            font-size: 1.75rem;
+            font-weight: 900;
             color: var(--navy);
         }
-
-
-        .status {
-
-            background: var(--green-light);
-
-            color: var(--green);
-
-            padding: 6px 10px;
-
-            border-radius: 20px;
-
-            font-size: 10px;
-
-            font-weight: 800;
-        }
-
-
-        /* CONTENU AVEC IMAGE */
-
-        .preview-content {
-
-            display: grid;
-
-            grid-template-columns: 1fr 165px;
-
-            gap: 20px;
-
-            align-items: center;
-        }
-
-
-        /* IMAGE ANALYSE.PNG */
-
-        .analysis-image {
-
-            height: 285px;
-
-            border-radius: 15px;
-
-            overflow: hidden;
-
-            background: #f3f7fa;
-
-            border: 1px solid var(--border);
-        }
-
-
-        .analysis-image img {
-
-            width: 100%;
-
-            height: 100%;
-
-            object-fit: cover;
-        }
-
-
-        /* SCORE */
-
-        .score-box {
-
-            text-align: center;
-
-            background: var(--green-light);
-
-            border-radius: 17px;
-
-            padding: 22px 12px;
-
-            border: 1px solid #ccebd9;
-        }
-
-
-        .score-number {
-
-            font-size: 45px;
-
-            line-height: 1;
-
-            font-weight: 800;
-
-            color: var(--sky);
-
-            margin-bottom: 8px;
-        }
-
 
         .score-label {
-
-            font-size: 10px;
-
-            font-weight: 800;
-
-            color: var(--navy);
-
-            margin-bottom: 12px;
-        }
-
-
-        .score-status {
-
-            font-size: 10px;
-
+            font-size: 0.8rem;
+            font-weight: 700;
             color: var(--green);
-
-            font-weight: 800;
-
-            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
-
-        .score-bar {
-
-            width: 100%;
-
-            height: 6px;
-
-            background: #d9e8df;
-
-            border-radius: 10px;
-
-            overflow: hidden;
+        .mockup-footer {
+            margin-top: 1.5rem;
+            display: flex;
+            gap: 1rem;
         }
 
-
-        .score-progress {
-
-            width: 12%;
-
-            height: 100%;
-
-            background: var(--sky);
-
-            border-radius: 10px;
+        .mockup-stat {
+            flex: 1;
+            padding: 0.75rem;
+            background: var(--bg-soft);
+            border-radius: var(--radius-sm);
+            text-align: center;
         }
 
+        .mockup-stat strong {
+            display: block;
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            color: var(--navy);
+        }
+
+        .mockup-stat span {
+            font-size: 0.7rem;
+            color: var(--slate);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
 
         /* =====================================================
-           6. INDICATEURS
+           TRUST BAR
            ===================================================== */
 
         .trust-bar {
-
-            width: 92%;
-
-            max-width: 1400px;
-
-            margin: -22px auto 0;
-
+            margin-top: -40px;
             position: relative;
-
-            z-index: 5;
-
-            background: white;
-
-            border: 1px solid var(--border);
-
-            border-radius: 15px;
-
-            padding: 16px 20px;
-
-            display: grid;
-
-            grid-template-columns: repeat(4, 1fr);
-
-            box-shadow:
-                0 10px 30px
-                rgba(16,28,53,0.05);
+            z-index: 10;
         }
 
+        .trust-grid {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            box-shadow: var(--shadow-lg);
+        }
 
         .trust-item {
-
             text-align: center;
-
-            border-right: 1px solid var(--border);
-
-            padding: 3px;
+            position: relative;
         }
 
-
-        .trust-item:last-child {
-
-            border-right: none;
+        .trust-item:not(:last-child)::after {
+            content: "";
+            position: absolute;
+            right: -1rem;
+            top: 20%;
+            height: 60%;
+            width: 1px;
+            background: var(--border);
         }
 
+        .trust-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 0.75rem;
+            background: var(--sky-light);
+            color: var(--sky);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .trust-item:nth-child(even) .trust-icon {
+            background: var(--green-light);
+            color: var(--green);
+        }
 
         .trust-item strong {
-
             display: block;
-
-            font-size: 19px;
-
-            color: var(--navy);
-
-            font-weight: 800;
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+            margin-bottom: 0.25rem;
         }
-
 
         .trust-item span {
-
-            font-size: 10px;
-
-            color: var(--text-soft);
-
-            font-weight: 700;
+            font-size: 0.85rem;
+            color: var(--slate);
         }
 
-
         /* =====================================================
-           7. SECTIONS
+           SECTIONS GÉNÉRALES
            ===================================================== */
 
         .section {
-
-            width: 92%;
-
-            max-width: 1400px;
-
-            margin: auto;
-
-            padding: 55px 0;
+            padding: 6rem 0;
         }
 
-
-        .section-heading {
-
-            margin-bottom: 28px;
+        .section-header {
+            margin-bottom: 3.5rem;
         }
-
-
-        .section-heading .tag {
-
-            color: var(--sky);
-
-            font-size: 11px;
-
-            font-weight: 800;
-
-            letter-spacing: 1px;
-
-            text-transform: uppercase;
-
-            margin-bottom: 7px;
-        }
-
-
-        .section-heading h2 {
-
-            font-size: clamp(27px, 3vw, 40px);
-
-            color: var(--navy);
-
-            line-height: 1.1;
-
-            margin-bottom: 8px;
-
-            font-weight: 800;
-        }
-
-
-        .section-heading p {
-
-            max-width: 600px;
-
-            color: var(--text-soft);
-
-            font-size: 13px;
-        }
-
 
         /* =====================================================
-           8. UTILISATEURS
+           COMMENT ÇA MARCHE
            ===================================================== */
 
-        .users-grid {
-
+        .steps {
             display: grid;
-
-            grid-template-columns:
-                repeat(3, 1fr);
-
-            gap: 20px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            position: relative;
         }
 
-
-        .user-card {
-
-            border: 1px solid var(--border);
-
-            border-radius: 17px;
-
-            overflow: hidden;
-
-            background: white;
-
-            transition: 0.3s;
+        .steps::before {
+            content: "";
+            position: absolute;
+            top: 40px;
+            left: 5%;
+            right: 5%;
+            height: 2px;
+            background: linear-gradient(to right, var(--border), var(--sky), var(--green), var(--border));
+            z-index: 0;
         }
 
-
-        .user-card:hover {
-
-            transform: translateY(-5px);
-
-            box-shadow:
-                0 15px 35px
-                rgba(16,28,53,0.08);
+        .step {
+            position: relative;
+            z-index: 1;
+            text-align: center;
         }
 
-
-        .user-image {
-
-            height: 225px;
-
-            background: #eef5f9;
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: center;
-
-            overflow: hidden;
-        }
-
-
-        .user-image img {
-
-            width: 100%;
-
-            height: 100%;
-
-            object-fit: cover;
-        }
-
-
-        /*
-         * Pour l'étudiant :
-         * on conserve toute l'image.
-         */
-
-        .user-image.student img {
-
-            object-fit: contain;
-
-            background: #eef5f9;
-        }
-
-
-        .user-info {
-
-            padding: 15px;
-
-            display: flex;
-
-            align-items: center;
-
-            gap: 12px;
-        }
-
-
-        .user-icon {
-
-            width: 40px;
-
-            height: 40px;
-
-            flex-shrink: 0;
-
+        .step-number {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+            background: var(--white);
+            border: 2px solid var(--border);
             border-radius: 50%;
-
             display: flex;
-
             align-items: center;
-
             justify-content: center;
-
-            background: var(--sky-light);
-
-            font-size: 18px;
-        }
-
-
-        .user-info div:nth-child(2) {
-
-            flex: 1;
-        }
-
-
-        .user-info h3 {
-
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 900;
             color: var(--sky);
-
-            font-size: 15px;
-
-            font-weight: 800;
+            transition: all 0.3s;
         }
 
-
-        .user-info p {
-
-            font-size: 10px;
-
-            color: var(--text-soft);
-
-            font-weight: 600;
-        }
-
-
-        .user-arrow {
-
-            width: 33px;
-
-            height: 33px;
-
-            border-radius: 50%;
-
+        .step:hover .step-number {
+            border-color: var(--sky);
             background: var(--sky);
-
             color: white;
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: center;
-
-            font-weight: 800;
+            transform: scale(1.1);
+            box-shadow: 0 10px 30px rgba(14, 165, 233, 0.3);
         }
 
+        .step:nth-child(4) .step-number { color: var(--green); }
+        .step:nth-child(4):hover .step-number {
+            border-color: var(--green);
+            background: var(--green);
+            box-shadow: 0 10px 30px rgba(14, 159, 110, 0.3);
+        }
 
-        .admin-card .user-info h3 {
+        .step h3 {
+            font-size: 1.15rem;
+            margin-bottom: 0.5rem;
+        }
 
+        .step p {
+            font-size: 0.9rem;
+            color: var(--slate);
+            line-height: 1.6;
+        }
+
+        /* =====================================================
+           FONCTIONNALITÉS
+           ===================================================== */
+
+        .features {
+            background: var(--bg-soft);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+        }
+
+        .feature-card {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(to right, var(--sky), var(--green));
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-xl);
+            border-color: transparent;
+        }
+
+        .feature-card:hover::before { opacity: 1; }
+
+        .feature-icon {
+            width: 56px;
+            height: 56px;
+            background: var(--sky-light);
+            color: var(--sky);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover .feature-icon {
+            background: var(--sky);
+            color: white;
+            transform: rotate(-5deg) scale(1.1);
+        }
+
+        .feature-card:nth-child(even) .feature-icon {
+            background: var(--green-light);
             color: var(--green);
         }
 
-
-        .admin-card .user-icon {
-
-            background: var(--green-light);
-        }
-
-
-        .admin-card .user-arrow {
-
+        .feature-card:nth-child(even):hover .feature-icon {
             background: var(--green);
         }
 
-
-        /* =====================================================
-           9. FONCTIONNALITÉS
-           ===================================================== */
-
-        .features-grid {
-
-            display: grid;
-
-            grid-template-columns:
-                repeat(3, 1fr);
-
-            gap: 20px;
+        .feature-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.75rem;
         }
 
+        .feature-card p {
+            color: var(--slate);
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
 
-        .feature-card {
+        /* =====================================================
+           UTILISATEURS
+           ===================================================== */
 
+        .users-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+        }
+
+        .user-card {
+            background: var(--white);
+            border-radius: var(--radius-xl);
+            overflow: hidden;
             border: 1px solid var(--border);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
 
-            border-radius: 17px;
+        .user-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-xl);
+            border-color: transparent;
+        }
 
+        .user-image {
+            height: 240px;
             overflow: hidden;
-
-            background: white;
-
-            transition: 0.3s;
+            position: relative;
         }
 
-
-        .feature-card:hover {
-
-            transform: translateY(-4px);
-
-            box-shadow:
-                0 15px 35px
-                rgba(16,28,53,0.08);
-        }
-
-
-        .feature-image {
-
-            height: 165px;
-
-            overflow: hidden;
-
-            background: #f2f6f9;
-        }
-
-
-        .feature-image img {
-
+        .user-image img {
             width: 100%;
-
             height: 100%;
-
             object-fit: cover;
+            transition: transform 0.6s;
         }
 
-
-        .feature-content {
-
-            padding: 18px;
+        .user-card:hover .user-image img {
+            transform: scale(1.05);
         }
 
-
-        .feature-number {
-
-            color: var(--sky);
-
-            font-size: 10px;
-
-            font-weight: 800;
-
-            margin-bottom: 6px;
+        .user-image::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(15,23,42,0.6), transparent 50%);
         }
 
-
-        .feature-content h3 {
-
-            font-size: 17px;
-
-            color: var(--navy);
-
-            margin-bottom: 6px;
-
-            font-weight: 800;
-        }
-
-
-        .feature-content p {
-
-            font-size: 11px;
-
-            color: var(--text-soft);
-
-            line-height: 1.5;
-        }
-
-
-        /* =====================================================
-           10. RAPPORT DE SIMILARITÉ
-           ===================================================== */
-
-        .report-section {
-
-            background: #f5fafc;
-
-            border-top: 1px solid var(--border);
-
-            border-bottom: 1px solid var(--border);
-        }
-
-
-        .report-layout {
-
-            display: grid;
-
-            grid-template-columns:
-                0.9fr 1.1fr;
-
-            gap: 45px;
-
-            align-items: center;
-        }
-
-
-        .report-text h2 {
-
-            font-size: clamp(27px, 3vw, 40px);
-
-            line-height: 1.1;
-
-            margin-bottom: 12px;
-
-            font-weight: 800;
-        }
-
-
-        .report-text h2 span {
-
-            color: var(--sky);
-        }
-
-
-        .report-text p {
-
-            color: var(--text-soft);
-
-            font-size: 13px;
-
-            max-width: 500px;
-
-            margin-bottom: 18px;
-        }
-
-
-        /* LISTE COURTE */
-
-        .report-list {
-
-            display: grid;
-
-            gap: 9px;
-        }
-
-
-        .report-list div {
-
-            display: flex;
-
-            align-items: center;
-
-            gap: 9px;
-
-            font-size: 11px;
-
+        .user-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            padding: 6px 14px;
+            border-radius: 100px;
+            font-size: 0.75rem;
             font-weight: 700;
-        }
-
-
-        .check {
-
-            width: 22px;
-
-            height: 22px;
-
-            border-radius: 50%;
-
-            background: var(--green-light);
-
-            color: var(--green);
-
+            z-index: 2;
             display: flex;
-
             align-items: center;
-
-            justify-content: center;
-
-            font-size: 11px;
+            gap: 6px;
         }
 
-
-        /* =====================================================
-           11. TECHNOLOGIE IA
-           ===================================================== */
-
-        .smart-section {
-
-            padding: 50px 0;
+        .user-info {
+            padding: 1.5rem;
         }
 
-
-        .smart-box {
-
-            background: var(--navy);
-
-            border-radius: 22px;
-
-            padding: 35px;
-
-            color: white;
-
-            display: grid;
-
-            grid-template-columns: 1fr 0.75fr;
-
-            gap: 35px;
-
+        .user-role {
+            display: inline-flex;
             align-items: center;
-
-            overflow: hidden;
-        }
-
-
-        .smart-box h2 {
-
-            font-size: 31px;
-
-            line-height: 1.1;
-
-            margin-bottom: 12px;
-
+            gap: 8px;
+            font-family: var(--font-display);
+            font-size: 0.75rem;
             font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--sky);
+            margin-bottom: 0.5rem;
         }
 
+        .user-card:nth-child(2) .user-role { color: var(--green); }
 
-        .smart-box h2 span {
+        .user-info h3 {
+            font-size: 1.35rem;
+            margin-bottom: 0.5rem;
+        }
 
+        .user-info p {
+            color: var(--slate);
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .user-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--navy);
+            transition: gap 0.3s;
+        }
+
+        .user-card:hover .user-link {
+            gap: 14px;
             color: var(--sky);
         }
 
+        .user-card:nth-child(2):hover .user-link { color: var(--green); }
 
-        .smart-box p {
+        /* =====================================================
+           TECHNOLOGIE (DARK)
+           ===================================================== */
 
-            color: #c6d1df;
-
-            font-size: 12px;
-
-            max-width: 570px;
-        }
-
-
-        .technology-list {
-
-            display: flex;
-
-            gap: 7px;
-
-            flex-wrap: wrap;
-
-            margin-top: 16px;
-        }
-
-
-        .technology-list span {
-
-            border: 1px solid
-                rgba(255,255,255,0.15);
-
-            padding: 6px 9px;
-
-            border-radius: 20px;
-
-            font-size: 9px;
-
-            color: #dce7f1;
-        }
-
-
-        .smart-image {
-
-            height: 210px;
-
-            border-radius: 15px;
-
+        .tech-section {
+            background: var(--bg-dark);
+            color: white;
+            position: relative;
             overflow: hidden;
-
-            background: #162540;
         }
 
+        .tech-section::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(14, 165, 233, 0.08), transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(14, 159, 110, 0.08), transparent 50%);
+        }
 
-        .smart-image img {
+        .tech-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
 
+        .tech-content h2 { color: white; }
+        .tech-content h2 span { color: var(--sky); }
+        .tech-content p { color: var(--slate-light); }
+
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 2rem;
+        }
+
+        .tech-tag {
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 100px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #CBD5E1;
+            transition: all 0.3s;
+        }
+
+        .tech-tag:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: var(--sky);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .tech-visual {
+            position: relative;
+        }
+
+        .tech-image {
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+        }
+
+        .tech-image img {
             width: 100%;
-
-            height: 100%;
-
+            height: 320px;
             object-fit: cover;
-
             opacity: 0.9;
         }
 
-
-        /* =====================================================
-           12. APPROCHE
-           ===================================================== */
-
-        .approach-grid {
-
+        .tech-stats {
             display: grid;
-
-            grid-template-columns:
-                repeat(3, 1fr);
-
-            gap: 15px;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1.5rem;
         }
 
-
-        .approach-card {
-
-            border: 1px solid var(--border);
-
-            border-radius: 15px;
-
-            padding: 20px;
-
-            background: white;
+        .tech-stat {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
         }
 
-
-        .approach-card strong {
-
+        .tech-stat strong {
+            display: block;
+            font-family: var(--font-display);
+            font-size: 1.5rem;
             color: var(--sky);
-
-            font-size: 11px;
-
-            font-weight: 800;
+            margin-bottom: 0.25rem;
         }
 
-
-        .approach-card h3 {
-
-            font-size: 16px;
-
-            margin: 6px 0;
-
-            font-weight: 800;
+        .tech-stat span {
+            font-size: 0.8rem;
+            color: var(--slate-light);
         }
-
-
-        .approach-card p {
-
-            color: var(--text-soft);
-
-            font-size: 11px;
-        }
-
 
         /* =====================================================
-           13. CTA FINAL
+           SÉCURITÉ
            ===================================================== */
 
-        .final-cta {
+        .security-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+        }
 
-            width: 92%;
-
-            max-width: 1100px;
-
-            margin: 20px auto 55px;
-
+        .security-card {
             text-align: center;
-
-            padding: 40px 20px;
-
-            background:
-                linear-gradient(
-                    120deg,
-                    var(--green-light),
-                    var(--sky-light)
-                );
-
+            padding: 2.5rem 2rem;
+            border-radius: var(--radius-lg);
+            background: var(--white);
             border: 1px solid var(--border);
-
-            border-radius: 22px;
+            transition: all 0.3s;
         }
 
-
-        .final-cta h2 {
-
-            font-size: 30px;
-
-            margin-bottom: 8px;
-
-            font-weight: 800;
+        .security-card:hover {
+            border-color: var(--green);
+            box-shadow: var(--shadow-lg);
         }
 
-
-        .final-cta p {
-
-            color: var(--text-soft);
-
-            font-size: 12px;
-
-            margin-bottom: 20px;
+        .security-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 1.5rem;
+            background: var(--green-light);
+            color: var(--green);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
         }
 
+        .security-card h3 {
+            font-size: 1.15rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .security-card p {
+            color: var(--slate);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
 
         /* =====================================================
-           14. FOOTER
+           CTA FINAL
            ===================================================== */
 
-        footer {
+        .cta-section {
+            padding: 6rem 0;
+        }
 
-            border-top: 1px solid var(--border);
+        .cta-box {
+            background: linear-gradient(135deg, var(--navy), var(--navy-light));
+            border-radius: var(--radius-2xl);
+            padding: 4rem 2rem;
+            text-align: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
 
-            background: white;
+        .cta-box::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(14, 165, 233, 0.15), transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
 
-            padding: 24px 5%;
+        @keyframes rotate {
+            to { transform: rotate(360deg); }
+        }
 
+        .cta-box > * { position: relative; z-index: 1; }
+
+        .cta-box h2 {
+            color: white;
+            font-size: clamp(1.75rem, 3vw, 2.5rem);
+            margin-bottom: 1rem;
+        }
+
+        .cta-box p {
+            color: var(--slate-light);
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-buttons {
             display: flex;
-
-            align-items: center;
-
-            justify-content: space-between;
-
-            gap: 15px;
-
+            gap: 1rem;
+            justify-content: center;
             flex-wrap: wrap;
         }
 
-
-        .footer-brand {
-
-            display: flex;
-
-            align-items: center;
-
-            gap: 8px;
-        }
-
-
-        .footer-brand img {
-
-            width: 38px;
-
-            height: 38px;
-
-            object-fit: contain;
-        }
-
-
-        .footer-brand strong {
-
-            font-size: 18px;
-
-            font-weight: 800;
-        }
-
-
-        .footer-brand span {
-
-            color: var(--sky);
-        }
-
-
-        footer p {
-
-            font-size: 10px;
-
-            color: var(--text-soft);
-
-            font-weight: 600;
-        }
-
-
         /* =====================================================
-           15. RESPONSIVE
+           FOOTER
            ===================================================== */
 
-        @media (max-width: 1050px) {
-
-            nav {
-                display: none;
-            }
-
-
-            .hero-container {
-
-                grid-template-columns: 1fr;
-            }
-
-
-            .analysis-preview {
-
-                max-width: 650px;
-
-                margin: auto;
-            }
-
-
-            .users-grid,
-            .features-grid {
-
-                grid-template-columns: 1fr 1fr;
-            }
-
-
-            .report-layout,
-            .smart-box {
-
-                grid-template-columns: 1fr;
-            }
-
-
-            .trust-bar {
-
-                grid-template-columns:
-                    repeat(2, 1fr);
-            }
-
-
-            .trust-item:nth-child(2) {
-
-                border-right: none;
-            }
+        footer {
+            background: var(--white);
+            border-top: 1px solid var(--border);
+            padding: 4rem 0 2rem;
         }
 
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 3rem;
+            margin-bottom: 3rem;
+        }
 
-        @media (max-width: 700px) {
+        .footer-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: var(--font-display);
+            font-size: 1.4rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+        }
 
-            .brand {
+        .footer-brand img { width: 36px; height: 36px; }
+        .footer-brand span { color: var(--sky); }
 
-                font-size: 22px;
-            }
+        .footer-desc {
+            color: var(--slate);
+            font-size: 0.9rem;
+            line-height: 1.7;
+            max-width: 300px;
+        }
 
+        .footer-col h4 {
+            font-family: var(--font-display);
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 1.25rem;
+            color: var(--navy);
+        }
 
-            .brand img {
+        .footer-col ul {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
 
-                width: 43px;
+        .footer-col a {
+            color: var(--slate);
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
 
-                height: 43px;
-            }
+        .footer-col a:hover { color: var(--sky); }
 
+        .footer-bottom {
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            font-size: 0.85rem;
+            color: var(--slate);
+        }
 
-            .nav-buttons .login {
+        /* =====================================================
+           RESPONSIVE
+           ===================================================== */
 
-                display: none;
-            }
+        @media (max-width: 1024px) {
+            .hero-grid { grid-template-columns: 1fr; text-align: center; }
+            .hero-text { margin-left: auto; margin-right: auto; }
+            .hero-buttons { justify-content: center; }
+            .steps { grid-template-columns: 1fr 1fr; }
+            .steps::before { display: none; }
+            .features-grid { grid-template-columns: 1fr 1fr; }
+            .users-grid { grid-template-columns: 1fr; max-width: 500px; margin: 0 auto; }
+            .tech-grid { grid-template-columns: 1fr; }
+            .security-grid { grid-template-columns: 1fr; max-width: 500px; margin: 0 auto; }
+            .footer-grid { grid-template-columns: 1fr 1fr; }
+        }
 
+        @media (max-width: 640px) {
+            .nav-links { display: none; }
+            .trust-grid { grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+            .trust-item:nth-child(2)::after { display: none; }
+            .steps { grid-template-columns: 1fr; }
+            .features-grid { grid-template-columns: 1fr; }
+            .mockup-body { grid-template-columns: 1fr; }
+            .mockup-chart { height: 140px; }
+            .footer-grid { grid-template-columns: 1fr; gap: 2rem; }
+            .cta-box { padding: 3rem 1.5rem; }
+        }
 
-            .hero {
+        /* =====================================================
+           ANIMATIONS SCROLL
+           ===================================================== */
 
-                padding-top: 35px;
-            }
+        .fade-up {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
 
-
-            .hero-left h1 {
-
-                font-size: 39px;
-            }
-
-
-            .preview-content {
-
-                grid-template-columns: 1fr;
-            }
-
-
-            .analysis-image {
-
-                height: 230px;
-            }
-
-
-            .score-box {
-
-                max-width: 170px;
-
-                margin: auto;
-            }
-
-
-            .users-grid,
-            .features-grid,
-            .approach-grid {
-
-                grid-template-columns: 1fr;
-            }
-
-
-            .trust-bar {
-
-                grid-template-columns: 1fr;
-            }
-
-
-            .trust-item {
-
-                border-right: none;
-
-                border-bottom: 1px solid var(--border);
-
-                padding-bottom: 10px;
-            }
-
-
-            .trust-item:last-child {
-
-                border-bottom: none;
-            }
-
-
-            .smart-box {
-
-                padding: 25px 20px;
-            }
-
-
-            footer {
-
-                text-align: center;
-
-                justify-content: center;
-            }
+        .fade-up.visible {
+            opacity: 1;
+            transform: translateY(0);
         }
 
     </style>
 
 </head>
 
-
 <body>
 
+    <!-- =====================================================
+         NAVIGATION
+         ===================================================== -->
 
-<!-- =====================================================
-     NAVIGATION
-     ===================================================== -->
-
-<header class="navbar">
-
-    <div class="nav-container">
-
-
-        <!-- LOGO -->
-
-        <a href="#accueil"
-           class="brand">
-
-            <img src="Images/logo.png"
-                 alt="Logo PlagiCheck">
-
-            <span>
-                Plagi<span>Check</span>
-            </span>
-
-        </a>
-
-
-        <!-- MENU -->
-
-        <nav>
-
-            <a href="#accueil">
-                Accueil
+    <nav class="navbar" id="navbar">
+        <div class="container nav-container">
+            <a href="#" class="brand">
+                <img src="Images/logo.png" alt="PlagiCheck">
+                <span>Plagi<span>Check</span></span>
             </a>
 
-            <a href="#fonctionnalites">
-                Fonctionnalités
-            </a>
-
-            <a href="#utilisateurs">
-                Utilisateurs
-            </a>
-
-            <a href="#apropos">
-                À propos
-            </a>
-
-        </nav>
-
-
-        <!-- ACTIONS -->
-
-        <div class="nav-buttons">
-
-            <a href="connexion.html"
-               class="login">
-
-                Se connecter
-
-            </a>
-
-
-            <a href="inscription.html"
-               class="login">
-
-                S'inscrire
-
-            </a>
-
-
-            <a href="#depot"
-               class="deposit">
-
-                Déposer un rapport
-
-            </a>
-
-        </div>
-
-    </div>
-
-</header>
-
-
-
-<!-- =====================================================
-     CONTENU PRINCIPAL
-     ===================================================== -->
-
-<main id="accueil">
-
-
-<!-- =====================================================
-     HERO
-     ===================================================== -->
-
-<section class="hero">
-
-    <div class="hero-container">
-
-
-        <!-- TEXTE -->
-
-        <div class="hero-left">
-
-            <div class="hero-label">
-
-                INTÉGRITÉ ACADÉMIQUE
-
+            <div class="nav-links">
+                <a href="#fonctionnement">Fonctionnement</a>
+                <a href="#fonctionnalites">Fonctionnalités</a>
+                <a href="#utilisateurs">Utilisateurs</a>
+                <a href="#technologie">Technologie</a>
+                <a href="#securite">Sécurité</a>
             </div>
 
+            <div class="nav-actions" id="navActions">
+                <!-- Rempli dynamiquement par JS selon la session -->
+            </div>
+        </div>
+    </nav>
 
-            <h1>
+    <!-- =====================================================
+         HERO
+         ===================================================== -->
 
-                Vérifiez vos travaux.
+    <section class="hero">
+        <div class="container">
+            <div class="hero-grid">
+                <div class="hero-content fade-up">
+                    <div class="hero-badge">
+                        <span class="dot"></span>
+                        Intégrité académique renforcée
+                    </div>
+                    
+                    <h1>
+                        Vérifiez vos travaux.<br>
+                        <span>Identifiez les similitudes.</span>
+                    </h1>
+                    
+                    <p class="hero-text">
+                        PlagiCheck analyse vos rapports académiques dossier par dossier et détecte 
+                        les similarités lexicales et sémantiques grâce à l'intelligence artificielle.
+                    </p>
+                    
+                    <div class="hero-buttons">
+                        <a href="connexion.html" class="btn btn-primary">
+                            <i class="fa-solid fa-rocket"></i>
+                            Analyser un document
+                        </a>
+                        <a href="#fonctionnement" class="btn btn-outline">
+                            Comment ça marche
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
 
-                <br>
+                <div class="hero-visual fade-up">
+                    <div class="mockup-card">
+                        <div class="mockup-header">
+                            <div class="mockup-title">Rapport de similarité</div>
+                            <div class="mockup-status">
+                                <i class="fa-solid fa-check-circle"></i>
+                                Analyse terminée
+                            </div>
+                        </div>
 
-                <span>
-                    Identifiez les similitudes.
-                </span>
+                        <div class="mockup-body">
+                            <div class="mockup-chart">
+                                <div class="bar"></div>
+                                <div class="bar"></div>
+                                <div class="bar"></div>
+                                <div class="bar"></div>
+                                <div class="bar"></div>
+                            </div>
 
-            </h1>
+                            <div class="mockup-score">
+                                <div class="score-ring">
+                                    <svg viewBox="0 0 100 100">
+                                        <circle class="bg" cx="50" cy="50" r="45"></circle>
+                                        <circle class="progress" cx="50" cy="50" r="45"></circle>
+                                    </svg>
+                                    <div class="score-value">12%</div>
+                                </div>
+                                <div class="score-label">Similarité faible</div>
+                            </div>
+                        </div>
 
+                        <div class="mockup-footer">
+                            <div class="mockup-stat">
+                                <strong>7</strong>
+                                <span>Dossiers</span>
+                            </div>
+                            <div class="mockup-stat">
+                                <strong>42</strong>
+                                <span>Sources</span>
+                            </div>
+                            <div class="mockup-stat">
+                                <strong>PDF</strong>
+                                <span>Rapport</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-            <p class="hero-description">
+    <!-- =====================================================
+         TRUST BAR
+         ===================================================== -->
 
-                PlagiCheck analyse les rapports académiques
-                et met en évidence les similitudes afin de
-                faciliter leur vérification.
+    <div class="container trust-bar fade-up">
+        <div class="trust-grid">
+            <div class="trust-item">
+                <div class="trust-icon"><i class="fa-solid fa-layer-group"></i></div>
+                <strong>Analyse globale</strong>
+                <span>Score de similarité complet</span>
+            </div>
+            <div class="trust-item">
+                <div class="trust-icon"><i class="fa-solid fa-puzzle-piece"></i></div>
+                <strong>Par section</strong>
+                <span>Dossier par dossier IAI</span>
+            </div>
+            <div class="trust-item">
+                <div class="trust-icon"><i class="fa-solid fa-brain"></i></div>
+                <strong>Double moteur</strong>
+                <span>Lexical + Sémantique</span>
+            </div>
+            <div class="trust-item">
+                <div class="trust-icon"><i class="fa-solid fa-file-pdf"></i></div>
+                <strong>Rapport PDF</strong>
+                <span>Détaillé et téléchargeable</span>
+            </div>
+        </div>
+    </div>
 
-            </p>
+    <!-- =====================================================
+         COMMENT ÇA MARCHE
+         ===================================================== -->
 
+    <section class="section" id="fonctionnement">
+        <div class="container">
+            <div class="section-header fade-up">
+                <div class="tag">Processus</div>
+                <h2 class="section-title">Une analyse en 4 étapes simples</h2>
+                <p class="section-subtitle">
+                    De la soumission de votre rapport au téléchargement du résultat détaillé.
+                </p>
+            </div>
 
-            <div class="hero-buttons">
+            <div class="steps">
+                <div class="step fade-up">
+                    <div class="step-number">01</div>
+                    <h3>Dépôt du rapport</h3>
+                    <p>L'étudiant téléverse son rapport de fin d'études au format PDF ou DOCX.</p>
+                </div>
+                <div class="step fade-up">
+                    <div class="step-number">02</div>
+                    <h3>Extraction & découpage</h3>
+                    <p>Le système extrait le texte et le découpe selon les dossiers du canevas IAI.</p>
+                </div>
+                <div class="step fade-up">
+                    <div class="step-number">03</div>
+                    <h3>Analyse intelligente</h3>
+                    <p>Chaque section est comparée à la base de référence et aux anciens documents.</p>
+                </div>
+                <div class="step fade-up">
+                    <div class="step-number">04</div>
+                    <h3>Rapport détaillé</h3>
+                    <p>Un PDF présente le score global et les correspondances détectées.</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
-                <a href="#depot"
-                   class="primary-button">
+    <!-- =====================================================
+         FONCTIONNALITÉS
+         ===================================================== -->
 
-                    Analyser un document
-                    →
+    <section class="section features" id="fonctionnalites">
+        <div class="container">
+            <div class="section-header fade-up">
+                <div class="tag">Fonctionnalités</div>
+                <h2 class="section-title">Une plateforme complète</h2>
+                <p class="section-subtitle">
+                    Tous les outils nécessaires pour garantir l'intégrité académique.
+                </p>
+            </div>
 
+            <div class="features-grid">
+                <div class="feature-card fade-up">
+                    <div class="feature-icon"><i class="fa-solid fa-book-open"></i></div>
+                    <h3>Base de référence</h3>
+                    <p>Les administrateurs enrichissent la base avec les documents de référence et les gabarits officiels.</p>
+                </div>
+
+                <div class="feature-card fade-up">
+                    <div class="feature-icon"><i class="fa-solid fa-magnifying-glass-chart"></i></div>
+                    <h3>Détection avancée</h3>
+                    <p>Similarité lexicale (TF-IDF) et sémantique (embeddings) pour détecter jusqu'aux reformulations.</p>
+                </div>
+
+                <div class="feature-card fade-up">
+                    <div class="feature-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                    <h3>Neutralisation gabarit</h3>
+                    <p>Les pages de garde et sections communes du canevas IAI ne sont jamais comptées comme plagiat.</p>
+                </div>
+
+                <div class="feature-card fade-up">
+                    <div class="feature-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                    <h3>Auto-réutilisation</h3>
+                    <p>Détection des copier-coller entre les anciens travaux du même étudiant.</p>
+                </div>
+
+                <div class="feature-card fade-up">
+                    <div class="feature-icon"><i class="fa-solid fa-users-gear"></i></div>
+                    <h3>Gestion des rôles</h3>
+                    <p>Espaces dédiés pour les étudiants, encadrants et administrateurs avec permissions adaptées.</p>
+                </div>
+
+                <div class="feature-card fade-up">
+                    <div class="feature-icon"><i class="fa-solid fa-file-export"></i></div>
+                    <h3>Rapports PDF</h3>
+                    <p>Génération automatique de rapports professionnels avec le détail des correspondances.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- =====================================================
+         UTILISATEURS
+         ===================================================== -->
+
+    <section class="section" id="utilisateurs">
+        <div class="container">
+            <div class="section-header fade-up">
+                <div class="tag">Utilisateurs</div>
+                <h2 class="section-title">Un espace pour chaque acteur</h2>
+                <p class="section-subtitle">
+                    Chaque profil dispose d'une interface adaptée à ses besoins.
+                </p>
+            </div>
+
+            <div class="users-grid">
+                <a href="connexion.html" class="user-card fade-up">
+                    <div class="user-image">
+                        <img src="Images/Etudiant.png" alt="Étudiant">
+                        <div class="user-badge">
+                            <i class="fa-solid fa-graduation-cap" style="color: var(--sky);"></i>
+                            Étudiant
+                        </div>
+                    </div>
+                    <div class="user-info">
+                        <div class="user-role">
+                            <i class="fa-solid fa-user"></i> Espace étudiant
+                        </div>
+                        <h3>Déposer & suivre</h3>
+                        <p>Déposez vos rapports, lancez les analyses et consultez l'historique de vos similarités.</p>
+                        <span class="user-link">
+                            Accéder à l'espace <i class="fa-solid fa-arrow-right"></i>
+                        </span>
+                    </div>
                 </a>
 
+                <a href="connexion.html" class="user-card fade-up">
+                    <div class="user-image">
+                        <img src="Images/enseignant.png" alt="Enseignant">
+                        <div class="user-badge">
+                            <i class="fa-solid fa-chalkboard-user" style="color: var(--green);"></i>
+                            Encadrant
+                        </div>
+                    </div>
+                    <div class="user-info">
+                        <div class="user-role">
+                            <i class="fa-solid fa-user-tie"></i> Espace encadrant
+                        </div>
+                        <h3>Examiner & décider</h3>
+                        <p>Consultez les analyses, validez ou signalez les travaux suspects avec des commentaires.</p>
+                        <span class="user-link">
+                            Accéder à l'espace <i class="fa-solid fa-arrow-right"></i>
+                        </span>
+                    </div>
+                </a>
+
+                <a href="connexion.html" class="user-card fade-up">
+                    <div class="user-image">
+                        <img src="Images/admin.png" alt="Administrateur">
+                        <div class="user-badge">
+                            <i class="fa-solid fa-shield" style="color: var(--navy);"></i>
+                            Administrateur
+                        </div>
+                    </div>
+                    <div class="user-info">
+                        <div class="user-role">
+                            <i class="fa-solid fa-crown"></i> Espace administration
+                        </div>
+                        <h3>Administrer</h3>
+                        <p>Gérez les utilisateurs, la base de référence et configurez les seuils d'alerte.</p>
+                        <span class="user-link">
+                            Accéder à l'espace <i class="fa-solid fa-arrow-right"></i>
+                        </span>
+                    </div>
+                </a>
             </div>
-
         </div>
-
-
-
-        <!-- =================================================
-             RAPPORT DE SIMILARITÉ
-             ================================================= -->
-
-        <div class="analysis-preview">
-
-
-            <div class="preview-card">
-
-
-                <!-- EN-TÊTE -->
-
-                <div class="preview-top">
-
-                    <div class="preview-title">
-
-                        Rapport de similarité
-
-                    </div>
-
-
-                    <div class="status">
-
-                        ✓ Analyse terminée
-
-                    </div>
-
-                </div>
-
-
-
-                <!-- IMAGE + SCORE -->
-
-                <div class="preview-content">
-
-
-                    <!--
-                        IMAGE ANALYSE.PNG
-
-                        Cette image remplace maintenant
-                        l'ancien faux document.
-                    -->
-
-                    <div class="analysis-image">
-
-                        <img src="Images/analyse.png"
-                             alt="Analyse d'un rapport académique">
-
-                    </div>
-
-
-
-                    <!-- POURCENTAGE -->
-
-                    <div class="score-box">
-
-
-                        <div class="score-number">
-
-                            12%
-
-                        </div>
-
-
-                        <div class="score-label">
-
-                            SIMILARITÉ
-                            <br>
-                            DÉTECTÉE
-
-                        </div>
-
-
-                        <div class="score-status">
-
-                            FAIBLE
-
-                        </div>
-
-
-                        <div class="score-bar">
-
-                            <div class="score-progress"></div>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-</section>
-
-
-
-<!-- =====================================================
-     INDICATEURS
-     ===================================================== -->
-
-<div class="trust-bar">
-
-
-    <div class="trust-item">
-
-        <strong>
-            01
-        </strong>
-
-        <span>
-            Analyse globale
-        </span>
-
-    </div>
-
-
-    <div class="trust-item">
-
-        <strong>
-            02
-        </strong>
-
-        <span>
-            Analyse par section
-        </span>
-
-    </div>
-
-
-    <div class="trust-item">
-
-        <strong>
-            03
-        </strong>
-
-        <span>
-            Sources comparées
-        </span>
-
-    </div>
-
-
-    <div class="trust-item">
-
-        <strong>
-            PDF
-        </strong>
-
-        <span>
-            Rapport d'analyse
-        </span>
-
-    </div>
-
-</div>
-
-
-
-<!-- =====================================================
-     UTILISATEURS
-     ===================================================== -->
-
-<section class="section"
-         id="utilisateurs">
-
-
-    <div class="section-heading">
-
-        <div class="tag">
-            UTILISATEURS
-        </div>
-
-        <h2>
-            Un espace pour chaque acteur.
-        </h2>
-
-        <p>
-            Une plateforme adaptée aux différents
-            acteurs du processus académique.
-        </p>
-
-    </div>
-
-
-
-    <div class="users-grid">
-
-
-        <!-- ÉTUDIANT -->
-
-        <article class="user-card">
-
-
-            <div class="user-image student">
-
-                <img src="Images/Etudiant.png"
-                     alt="Étudiant">
-
-            </div>
-
-
-            <div class="user-info">
-
-
-                <div class="user-icon">
-                    🎓
-                </div>
-
-
-                <div>
-
-                    <h3>
-                        ÉTUDIANT
-                    </h3>
-
-                    <p>
-                        Déposer et suivre ses rapports.
+    </section>
+
+    <!-- =====================================================
+         TECHNOLOGIE
+         ===================================================== -->
+
+    <section class="section tech-section" id="technologie">
+        <div class="container">
+            <div class="tech-grid">
+                <div class="tech-content fade-up">
+                    <div class="tag">Technologie</div>
+                    <h2 class="section-title">Une analyse <span>intelligente</span></h2>
+                    <p style="color: var(--slate-light); font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.5rem;">
+                        PlagiCheck combine traitement du langage naturel et apprentissage automatique 
+                        pour mesurer finement les similarités entre documents académiques.
                     </p>
+                    
+                    <div class="tech-stack">
+                        <span class="tech-tag">Python</span>
+                        <span class="tech-tag">FastAPI</span>
+                        <span class="tech-tag">spaCy NLP</span>
+                        <span class="tech-tag">TF-IDF</span>
+                        <span class="tech-tag">Sentence Transformers</span>
+                        <span class="tech-tag">SQLAlchemy</span>
+                    </div>
 
+                    <div class="tech-stats">
+                        <div class="tech-stat">
+                            <strong>40/60</strong>
+                            <span>Poids lexical / sémantique</span>
+                        </div>
+                        <div class="tech-stat">
+                            <strong>7</strong>
+                            <span>Sections analysées</span>
+                        </div>
+                    </div>
                 </div>
 
+                <div class="tech-visual fade-up">
+                    <div class="tech-image">
+                        <img src="Images/IA.png" alt="Intelligence artificielle">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-                <span class="user-arrow">
-                    →
-                </span>
+    <!-- =====================================================
+         SÉCURITÉ
+         ===================================================== -->
 
+    <section class="section" id="securite">
+        <div class="container">
+            <div class="section-header fade-up">
+                <div class="tag green">Sécurité</div>
+                <h2 class="section-title">Vos données sont protégées</h2>
+                <p class="section-subtitle">
+                    Une architecture conçue pour la confidentialité et l'intégrité.
+                </p>
             </div>
 
-        </article>
-
-
-
-        <!-- ENSEIGNANT -->
-
-        <article class="user-card">
-
-
-            <div class="user-image">
-
-                <img src="Images/enseignant.png"
-                     alt="Enseignant">
-
-            </div>
-
-
-            <div class="user-info">
-
-
-                <div class="user-icon">
-                    👥
+            <div class="security-grid">
+                <div class="security-card fade-up">
+                    <div class="security-icon"><i class="fa-solid fa-lock"></i></div>
+                    <h3>Mots de passe hachés</h3>
+                    <p>Chiffrement bcrypt et sessions JWT révocables côté serveur.</p>
                 </div>
 
+                <div class="security-card fade-up">
+                    <div class="security-icon"><i class="fa-solid fa-folder-tree"></i></div>
+                    <h3>Fichiers isolés</h3>
+                    <p>Stockage sécurisé avec noms aléatoires et validation stricte des formats.</p>
+                </div>
 
+                <div class="security-card fade-up">
+                    <div class="security-icon"><i class="fa-solid fa-user-shield"></i></div>
+                    <h3>Accès par rôle</h3>
+                    <p>Chaque utilisateur n'accède qu'aux données qui le concernent.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- =====================================================
+         CTA FINAL
+         ===================================================== -->
+
+    <section class="cta-section">
+        <div class="container">
+            <div class="cta-box fade-up">
+                <h2>Prêt à vérifier votre rapport ?</h2>
+                <p>Connectez-vous et lancez votre première analyse en quelques secondes.</p>
+                <div class="cta-buttons">
+                    <a href="connexion.html" class="btn btn-primary" style="background: white; color: var(--navy);">
+                        <i class="fa-solid fa-right-to-bracket"></i>
+                        Se connecter
+                    </a>
+                    <a href="inscription.html" class="btn btn-glass">
+                        Créer un compte
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- =====================================================
+         FOOTER
+         ===================================================== -->
+
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
                 <div>
-
-                    <h3>
-                        ENSEIGNANT
-                    </h3>
-
-                    <p>
-                        Examiner les résultats d'analyse.
+                    <div class="footer-brand">
+                        <img src="Images/logo.png" alt="PlagiCheck">
+                        Plagi<span>Check</span>
+                    </div>
+                    <p class="footer-desc">
+                        Plateforme de détection de similarité académique conçue pour l'IAI Cameroun. 
+                        Préservez l'intégrité de vos travaux de recherche.
                     </p>
-
                 </div>
 
-
-                <span class="user-arrow">
-                    →
-                </span>
-
-            </div>
-
-        </article>
-
-
-
-        <!-- ADMINISTRATEUR -->
-
-        <article class="user-card admin-card">
-
-
-            <div class="user-image">
-
-                <img src="Images/admin.png"
-                     alt="Administrateur">
-
-            </div>
-
-
-            <div class="user-info">
-
-
-                <div class="user-icon">
-                    ⚙
+                <div class="footer-col">
+                    <h4>Produit</h4>
+                    <ul>
+                        <li><a href="#fonctionnement">Fonctionnement</a></li>
+                        <li><a href="#fonctionnalites">Fonctionnalités</a></li>
+                        <li><a href="#securite">Sécurité</a></li>
+                    </ul>
                 </div>
 
-
-                <div>
-
-                    <h3>
-                        ADMINISTRATEUR
-                    </h3>
-
-                    <p>
-                        Administrer la plateforme.
-                    </p>
-
+                <div class="footer-col">
+                    <h4>Accès</h4>
+                    <ul>
+                        <li><a href="connexion.html">Connexion</a></li>
+                        <li><a href="inscription.html">Inscription</a></li>
+                        <li><a href="#utilisateurs">Espaces</a></li>
+                    </ul>
                 </div>
 
-
-                <span class="user-arrow">
-                    →
-                </span>
-
+                <div class="footer-col">
+                    <h4>IAI Cameroun</h4>
+                    <ul>
+                        <li><a href="#">À propos</a></li>
+                        <li><a href="#">Contact</a></li>
+                        <li><a href="#">Support</a></li>
+                    </ul>
+                </div>
             </div>
 
-        </article>
-
-    </div>
-
-</section>
-
-
-
-<!-- =====================================================
-     FONCTIONNALITÉS
-     ===================================================== -->
-
-<section class="section"
-         id="fonctionnalites">
-
-
-    <div class="section-heading">
-
-        <div class="tag">
-            FONCTIONNALITÉS
+            <div class="footer-bottom">
+                <p>© 2026 PlagiCheck — IAI Cameroun. Tous droits réservés.</p>
+                <p>Plateforme d'analyse de similarité académique</p>
+            </div>
         </div>
-
-        <h2>
-            Une analyse en plusieurs étapes.
-        </h2>
-
-    </div>
-
-
-
-    <div class="features-grid">
-
-
-        <!-- FONCTIONNALITÉ 1 -->
-
-        <article class="feature-card">
-
-
-            <div class="feature-image">
-
-                <img src="Images/Bibliotheque.png"
-                     alt="Bibliothèque de rapports">
-
-            </div>
-
-
-            <div class="feature-content">
-
-                <div class="feature-number">
-                    01 — COMPARAISON
-                </div>
-
-                <h3>
-                    Comparaison des rapports
-                </h3>
-
-                <p>
-                    Comparaison avec les documents
-                    disponibles dans la base.
-                </p>
-
-            </div>
-
-        </article>
-
-
-
-        <!-- FONCTIONNALITÉ 2 -->
-
-        <article class="feature-card">
-
-
-            <div class="feature-image">
-
-                <img src="Images/analyse.png"
-                     alt="Analyse par section">
-
-            </div>
-
-
-            <div class="feature-content">
-
-                <div class="feature-number">
-                    02 — DÉTECTION
-                </div>
-
-                <h3>
-                    Analyse par section
-                </h3>
-
-                <p>
-                    Identification des similitudes
-                    dans chaque partie du rapport.
-                </p>
-
-            </div>
-
-        </article>
-
-
-
-        <!-- FONCTIONNALITÉ 3 -->
-
-        <article class="feature-card">
-
-
-            <div class="feature-image">
-
-                <img src="Images/IA.png"
-                     alt="Traitement intelligent">
-
-            </div>
-
-
-            <div class="feature-content">
-
-                <div class="feature-number">
-                    03 — TRAITEMENT
-                </div>
-
-                <h3>
-                    Traitement intelligent
-                </h3>
-
-                <p>
-                    Analyse automatique du contenu
-                    et des similitudes détectées.
-                </p>
-
-            </div>
-
-        </article>
-
-    </div>
-
-</section>
-
-
-
-<!-- =====================================================
-     RAPPORT DE SIMILARITÉ
-     ===================================================== -->
-
-<section class="report-section">
-
-
-    <div class="section">
-
-
-        <div class="report-layout">
-
-
-            <!-- TEXTE -->
-
-            <div class="report-text">
-
-
-                <div class="section-heading">
-
-                    <div class="tag">
-                        RÉSULTATS
-                    </div>
-
-                    <h2>
-
-                        Des résultats
-                        <span>clairs.</span>
-
-                    </h2>
-
-                </div>
-
-
-                <p>
-
-                    PlagiCheck fournit une vision claire
-                    des similitudes détectées dans
-                    le rapport.
-
-                </p>
-
-
-                <div class="report-list">
-
-
-                    <div>
-
-                        <span class="check">
-                            ✓
-                        </span>
-
-                        Score global de similarité
-
-                    </div>
-
-
-                    <div>
-
-                        <span class="check">
-                            ✓
-                        </span>
-
-                        Correspondances par section
-
-                    </div>
-
-
-                    <div>
-
-                        <span class="check">
-                            ✓
-                        </span>
-
-                        Sources identifiées
-
-                    </div>
-
-
-                    <div>
-
-                        <span class="check">
-                            ✓
-                        </span>
-
-                        Rapport d'analyse PDF
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-
-            <!-- CARTE RÉSULTAT -->
-
-            <div class="report-card">
-
-
-                <div class="report-header">
-
-                    <strong>
-                        Résultat de l'analyse
-                    </strong>
-
-                    <span class="report-score">
-                        12%
-                    </span>
-
-                </div>
-
-
-                <div class="source">
-
-
-                    <div class="source-top">
-
-                        <span class="source-name">
-                            Base documentaire
-                        </span>
-
-                        <span class="source-percent">
-                            6%
-                        </span>
-
-                    </div>
-
-
-                    <div class="source-bar">
-
-                        <div class="source-fill"
-                             style="width:50%;">
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-                <div class="source">
-
-
-                    <div class="source-top">
-
-                        <span class="source-name">
-                            Rapports académiques
-                        </span>
-
-                        <span class="source-percent">
-                            4%
-                        </span>
-
-                    </div>
-
-
-                    <div class="source-bar">
-
-                        <div class="source-fill"
-                             style="width:34%;">
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-                <div class="source">
-
-
-                    <div class="source-top">
-
-                        <span class="source-name">
-                            Autres correspondances
-                        </span>
-
-                        <span class="source-percent">
-                            2%
-                        </span>
-
-                    </div>
-
-
-                    <div class="source-bar">
-
-                        <div class="source-fill"
-                             style="width:18%;">
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-</section>
-
-
-
-<!-- =====================================================
-     TECHNOLOGIE
-     ===================================================== -->
-
-<section class="smart-section">
-
-
-    <div class="section"
-         style="padding-top:0;padding-bottom:0;">
-
-
-        <div class="smart-box">
-
-
-            <div>
-
-
-                <div class="tag"
-                     style="color:#5bc0ff;">
-
-                    TECHNOLOGIE
-
-                </div>
-
-
-                <h2>
-
-                    Une analyse
-                    <span>intelligente.</span>
-
-                </h2>
-
-
-                <p>
-
-                    PlagiCheck utilise des techniques
-                    de traitement automatique du langage
-                    pour mesurer les similitudes entre
-                    les contenus analysés.
-
-                </p>
-
-
-                <div class="technology-list">
-
-                    <span>
-                        Python
-                    </span>
-
-                    <span>
-                        spaCy
-                    </span>
-
-                    <span>
-                        TF-IDF
-                    </span>
-
-                    <span>
-                        Sentence Transformers
-                    </span>
-
-                </div>
-
-            </div>
-
-
-
-            <!-- IMAGE IA -->
-
-            <div class="smart-image">
-
-                <img src="Images/IA.png"
-                     alt="Intelligence artificielle">
-
-            </div>
-
-        </div>
-
-    </div>
-
-</section>
-
-
-
-<!-- =====================================================
-     À PROPOS
-     ===================================================== -->
-
-<section class="section"
-         id="apropos">
-
-
-    <div class="section-heading">
-
-        <div class="tag">
-            NOTRE APPROCHE
-        </div>
-
-        <h2>
-            Pensé pour les rapports académiques.
-        </h2>
-
-    </div>
-
-
-
-    <div class="approach-grid">
-
-
-        <article class="approach-card">
-
-            <strong>
-                ANALYSE 01
-            </strong>
-
-            <h3>
-                Vue globale
-            </h3>
-
-            <p>
-                Comparaison du rapport avec
-                les documents disponibles.
-            </p>
-
-        </article>
-
-
-
-        <article class="approach-card">
-
-            <strong>
-                ANALYSE 02
-            </strong>
-
-            <h3>
-                Vue détaillée
-            </h3>
-
-            <p>
-                Analyse des différentes parties
-                du rapport.
-            </p>
-
-        </article>
-
-
-
-        <article class="approach-card">
-
-            <strong>
-                CONTEXTE 03
-            </strong>
-
-            <h3>
-                Gabarit académique
-            </h3>
-
-            <p>
-                Prise en compte du modèle académique
-                commun utilisé par les étudiants.
-            </p>
-
-        </article>
-
-    </div>
-
-</section>
-
-
-
-<!-- =====================================================
-     CTA FINAL
-     ===================================================== -->
-
-<section class="final-cta"
-         id="depot">
-
-
-    <h2>
-        Prêt à vérifier votre rapport ?
-    </h2>
-
-
-    <p>
-        Déposez votre document et lancez votre analyse.
-    </p>
-
-
-    <a href="connexion.html"
-       class="primary-button">
-
-        Commencer une analyse
-        →
-
-    </a>
-
-</section>
-
-
-</main>
-
-
-
-<!-- =====================================================
-     FOOTER
-     ===================================================== -->
-
-<footer>
-
-
-    <div class="footer-brand">
-
-
-        <img src="Images/logo.png"
-             alt="Logo PlagiCheck">
-
-
-        <strong>
-
-            Plagi<span>Check</span>
-
-        </strong>
-
-    </div>
-
-
-    <p>
-        © 2026 PlagiCheck — IAI Cameroun
-    </p>
-
-
-    <p>
-        Plateforme d'analyse de similarité académique
-    </p>
-
-</footer>
-
+    </footer>
+
+    <!-- =====================================================
+         SCRIPTS
+         ===================================================== -->
+
+    <script>
+        // Navigation au scroll
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            navbar.classList.toggle('scrolled', window.scrollY > 20);
+        });
+
+        // Animations au scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+        // Gestion dynamique de la navbar selon la session
+        const navActions = document.getElementById('navActions');
+        const token = sessionStorage.getItem('plagicheck_jeton');
+        const user = JSON.parse(sessionStorage.getItem('plagicheck_utilisateur') || 'null');
+
+        if (token && user) {
+            const dashboards = {
+                'etudiant': 'etudiant.html',
+                'encadrant': 'enseignant.html',
+                'administrateur': 'admin.html'
+            };
+            const lienEspace = dashboards[user.role] || 'connexion.html';
+
+            navActions.innerHTML = `
+                <a href="${lienEspace}" class="nav-link">
+                    <i class="fa-solid fa-gauge-high"></i> Mon espace
+                </a>
+                <button onclick="window.seDeconnecter()" class="btn btn-primary nav-cta" style="background: #ef4444; box-shadow: 0 4px 14px rgba(239,68,68,0.25);">
+                    <i class="fa-solid fa-right-from-bracket"></i> Déconnexion
+                </button>
+            `;
+        } else {
+            navActions.innerHTML = `
+                <a href="connexion.html" class="nav-link">Se connecter</a>
+                <a href="inscription.html" class="btn btn-primary nav-cta">
+                    <i class="fa-solid fa-user-plus"></i> S'inscrire
+                </a>
+            `;
+        }
+    </script>
 
 </body>
 

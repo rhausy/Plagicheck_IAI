@@ -14,6 +14,7 @@ from app.database import moteur, Base
 from app.config import NOM_APPLICATION, RACINE_PROJET
 from app.routers import documents, auth, analyses, admin, rapports, commentaires
 from fastapi.staticfiles import StaticFiles
+from app.routers import documents, auth, analyses, admin, rapports, commentaires, notifications
 
 # Créer les tables de la base de données si elles n'existent pas encore
 Base.metadata.create_all(bind=moteur)
@@ -71,6 +72,7 @@ app.include_router(analyses.router)
 app.include_router(admin.router)
 app.include_router(rapports.router)
 app.include_router(commentaires.router)
+app.include_router(notifications.router)
 
 # Servir le frontend (pages HTML, JS, CSS, images)
 app.mount(
